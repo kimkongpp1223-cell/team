@@ -237,7 +237,28 @@
             border-radius:10px;padding:11px 14px;
             font-size:12px;line-height:1.7;color:var(--text2);
         }
-        .reply-meta{font-size:11px;color:var(--text3);margin-bottom:4px;font-weight:600;}
+        .reply-top{
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:10px;
+            margin-bottom:4px;
+        }
+        .reply-meta{font-size:11px;color:var(--text3);font-weight:600;}
+        .reply-actions{
+            display:flex;
+            align-items:center;
+            gap:10px;
+        }
+        .reply-edit-btn, .reply-delete-btn{
+            border:none;
+            background:transparent;
+            font-size:12px;
+            font-weight:700;
+            cursor:pointer;
+        }
+        .reply-edit-btn{color:#4f46e5;}
+        .reply-delete-btn{color:#ef4444;}
 
         .reply-ta{
             width:100%;background:rgba(241,245,249,0.92);
@@ -261,9 +282,119 @@
             padding:54px 20px;color:var(--text3);text-align:center;
         }
         .el-icon{font-size:36px;margin-bottom:12px;opacity:.5;}
+
+        .login-wrap{
+            position:fixed;
+            inset:0;
+            background:
+                    radial-gradient(circle at 20% 20%,rgba(20,184,166,0.12),transparent 28%),
+                    radial-gradient(circle at 80% 10%,rgba(99,102,241,0.12),transparent 30%),
+                    linear-gradient(180deg,#f8fafc 0%,#eef2f7 100%);
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            z-index:9999;
+            padding:24px;
+        }
+        .login-box{
+            width:100%;
+            max-width:400px;
+            background:#fff;
+            padding:32px 28px;
+            border-radius:20px;
+            border:1px solid #e5e7eb;
+            box-shadow:0 24px 48px rgba(15,23,42,0.12);
+        }
+        .login-logo{
+            display:flex;
+            align-items:center;
+            gap:10px;
+            margin-bottom:8px;
+        }
+        .login-logo-mark{
+            width:36px;
+            height:36px;
+            border-radius:12px;
+            background:linear-gradient(135deg,var(--primary),var(--secondary));
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            color:#fff;
+            font-weight:900;
+            font-size:16px;
+        }
+        .login-logo-text{
+            font-size:18px;
+            font-weight:800;
+            color:#0f172a;
+        }
+        .login-sub{
+            font-size:12px;
+            color:#64748b;
+            margin-bottom:20px;
+        }
+        .login-title{
+            font-size:26px;
+            font-weight:800;
+            color:#0f172a;
+            margin-bottom:20px;
+            letter-spacing:-0.3px;
+        }
+        .login-input{
+            width:100%;
+            padding:13px 14px;
+            margin-bottom:12px;
+            border-radius:12px;
+            border:1px solid #dbe2ea;
+            background:#f8fafc;
+            font-size:14px;
+            outline:none;
+            transition:all .2s;
+        }
+        .login-input:focus{
+            border-color:rgba(20,184,166,0.45);
+            box-shadow:0 0 0 4px rgba(20,184,166,0.10);
+            background:#fff;
+        }
+        .login-btn{
+            width:100%;
+            padding:13px 14px;
+            border:none;
+            border-radius:12px;
+            background:linear-gradient(135deg,#0f766e,#334155);
+            color:#fff;
+            font-weight:800;
+            font-size:14px;
+            cursor:pointer;
+            margin-top:4px;
+        }
+        .login-err{
+            margin-top:12px;
+            font-size:13px;
+            color:#ef4444;
+            display:none;
+        }
     </style>
 </head>
 <body>
+
+<div id="loginWrap" class="login-wrap">
+    <div class="login-box">
+        <div class="login-logo">
+            <div class="login-logo-mark">S</div>
+            <div class="login-logo-text">소셜다모아</div>
+        </div>
+        <div class="login-sub">Admin Panel</div>
+        <div class="login-title">관리자 로그인</div>
+
+        <input id="adminId" class="login-input" placeholder="아이디">
+        <input id="adminPw" class="login-input" type="password" placeholder="비밀번호">
+
+        <button class="login-btn" onclick="adminLogin()">로그인</button>
+        <div id="loginErr" class="login-err">로그인 실패</div>
+    </div>
+</div>
+
 <div class="wrapper">
     <header>
         <div class="logo">
@@ -340,13 +471,7 @@
 
                 <div class="panel-body">
                     <div class="search-row">
-                        <input
-                                type="text"
-                                id="searchInput"
-                                class="search-input"
-                                placeholder="제목, 이메일, 내용, 문의유형으로 검색"
-                                oninput="handleSearch(this.value)"
-                        >
+                        <input type="text" id="searchInput" class="search-input" placeholder="제목, 이메일, 내용, 문의유형으로 검색" oninput="handleSearch(this.value)">
                         <select id="sortSelect" class="sort-select" onchange="changeSort(this.value)">
                             <option value="latest">최신순</option>
                             <option value="oldest">오래된순</option>
@@ -356,7 +481,6 @@
                     </div>
 
                     <div class="search-info" id="searchInfo">전체 문의를 표시 중입니다.</div>
-
                     <div class="inq-list" id="inqList" style="margin-top:16px;"></div>
                 </div>
             </div>
@@ -373,6 +497,13 @@
 
     var SC = { 미처리:'sb-p', 처리중:'sb-r', 처리완료:'sb-d' };
     var SL = { 미처리:'⏳ 미처리', 처리중:'🔄 처리중', 처리완료:'✅ 처리완료' };
+
+    function api(url, options = {}) {
+        options.headers = options.headers || {};
+        const token = localStorage.getItem("adminToken");
+        if (token) options.headers["Authorization"] = token;
+        return fetch(url, options);
+    }
 
     function formatDate(dateString) {
         if (!dateString) return '날짜 없음';
@@ -395,8 +526,12 @@
     }
 
     function loadInquiries(openId) {
-        fetch("/api/admin/inquiries")
+        api("/api/admin/inquiries")
             .then(function(res) {
+                if (res.status === 401) {
+                    showLogin();
+                    throw new Error("인증 필요");
+                }
                 if (!res.ok) throw new Error("문의 목록 조회 실패");
                 return res.json();
             })
@@ -433,8 +568,12 @@
     }
 
     function fetchReplies(id) {
-        fetch("/api/admin/replies/" + id)
+        api("/api/admin/replies/" + id)
             .then(function(res) {
+                if (res.status === 401) {
+                    showLogin();
+                    throw new Error("인증 필요");
+                }
                 if (!res.ok) throw new Error("답변 조회 실패");
                 return res.json();
             })
@@ -461,9 +600,7 @@
         var types = ['오류 신고', '기능 문의', '계정 문의', '결제 문의', '요청 문의', '기타 문의'];
         types.forEach(function(t) {
             var el = document.getElementById('fc-' + t);
-            if (el) {
-                el.textContent = inquiries.filter(function(i){ return i.type === t; }).length;
-            }
+            if (el) el.textContent = inquiries.filter(function(i){ return i.type === t; }).length;
         });
 
         document.getElementById('fc-전체').textContent = inquiries.length;
@@ -471,9 +608,7 @@
 
     function matchesKeyword(inq, keyword) {
         if (!keyword) return true;
-
         var q = keyword.toLowerCase();
-
         return (
             String(inq.title || '').toLowerCase().includes(q) ||
             String(inq.email || '').toLowerCase().includes(q) ||
@@ -484,20 +619,13 @@
 
     function sortList(list) {
         list.sort(function(a, b) {
-            if (curSort === 'latest') {
-                return new Date(b.rawDate) - new Date(a.rawDate);
-            }
-
-            if (curSort === 'oldest') {
-                return new Date(a.rawDate) - new Date(b.rawDate);
-            }
-
+            if (curSort === 'latest') return new Date(b.rawDate) - new Date(a.rawDate);
+            if (curSort === 'oldest') return new Date(a.rawDate) - new Date(b.rawDate);
             if (curSort === 'pending') {
                 if (a.status === '미처리' && b.status !== '미처리') return -1;
                 if (a.status !== '미처리' && b.status === '미처리') return 1;
                 return new Date(b.rawDate) - new Date(a.rawDate);
             }
-
             return 0;
         });
     }
@@ -507,11 +635,9 @@
         if (!info) return;
 
         var parts = [];
-
         if (curFilter !== '전체') parts.push('유형: ' + curFilter);
         if (curStatus !== 'all') parts.push('상태: ' + curStatus);
         if (curKeyword.trim()) parts.push('검색어: ' + curKeyword.trim());
-
         if (curSort === 'latest') parts.push('정렬: 최신순');
         if (curSort === 'oldest') parts.push('정렬: 오래된순');
         if (curSort === 'pending') parts.push('정렬: 미처리 우선');
@@ -529,17 +655,9 @@
 
         var list = inquiries.slice();
 
-        if (curFilter !== '전체') {
-            list = list.filter(function(i){ return i.type === curFilter; });
-        }
-
-        if (curStatus !== 'all') {
-            list = list.filter(function(i){ return i.status === curStatus; });
-        }
-
-        list = list.filter(function(i) {
-            return matchesKeyword(i, curKeyword);
-        });
+        if (curFilter !== '전체') list = list.filter(function(i){ return i.type === curFilter; });
+        if (curStatus !== 'all') list = list.filter(function(i){ return i.status === curStatus; });
+        list = list.filter(function(i) { return matchesKeyword(i, curKeyword); });
 
         sortList(list);
         updateSearchInfo(list.length);
@@ -548,11 +666,11 @@
 
         if (!list.length) {
             container.innerHTML = `
-        <div class="empty-list">
-          <div class="el-icon">📭</div>
-          <p>해당 조건의 문의가 없습니다.</p>
-        </div>
-      `;
+                <div class="empty-list">
+                    <div class="el-icon">📭</div>
+                    <p>해당 조건의 문의가 없습니다.</p>
+                </div>
+            `;
             return;
         }
 
@@ -560,78 +678,83 @@
             var repliesHtml = '';
             if (inq.replies && inq.replies.length) {
                 repliesHtml = `
-          <div class="reply-list">
-            ${inq.replies.map(function(r) {
+                    <div class="reply-list">
+                        ${inq.replies.map(function(r) {
                     return `
-                <div class="reply-item">
-                  <div class="reply-meta">관리자 답변 · ${formatDate(r.createdAt)}</div>
-                  ${esc(r.content)}
-                </div>
-              `;
+                                <div class="reply-item">
+                                    <div class="reply-top">
+                                        <div class="reply-meta">관리자 답변 · ${formatDate(r.createdAt)}</div>
+                                        <div class="reply-actions">
+                                            <button type="button" class="reply-edit-btn" onclick="event.stopPropagation(); editReply(${inq.id}, ${r.id}, '${jsEsc(r.content)}')">수정</button>
+                                            <button type="button" class="reply-delete-btn" onclick="event.stopPropagation(); deleteReply(${inq.id}, ${r.id})">삭제</button>
+                                        </div>
+                                    </div>
+                                    ${esc(r.content)}
+                                </div>
+                            `;
                 }).join('')}
-          </div>
-        `;
+                    </div>
+                `;
             }
 
             var attachmentsHtml = '';
             if (inq.attachmentNames && inq.attachmentNames.length) {
                 attachmentsHtml = `
-          <div class="attachment-box">
-            <div class="reply-meta" style="margin-bottom:8px;">첨부파일</div>
-            <div style="display:flex;flex-direction:column;gap:6px;">
-              ${inq.attachmentNames.map(function(name, index) {
+                    <div class="attachment-box">
+                        <div class="reply-meta" style="margin-bottom:8px;">첨부파일</div>
+                        <div style="display:flex;flex-direction:column;gap:6px;">
+                            ${inq.attachmentNames.map(function(name, index) {
                     return `
-                  <a class="attachment-link reply-item"
-                     href="/api/admin/inquiries/${inq.id}/attachments/${index}">
-                    📎 ${esc(name)}
-                  </a>
-                `;
+                                    <a class="attachment-link reply-item" href="/api/admin/inquiries/${inq.id}/attachments/${index}">
+                                        📎 ${esc(name)}
+                                    </a>
+                                `;
                 }).join('')}
-            </div>
-          </div>
-        `;
+                        </div>
+                    </div>
+                `;
             }
 
             return `
-        <div class="inq-card ${inq.detailOpen ? 'expanded' : ''}">
-          <div class="ir1" onclick="toggleDetail(${inq.id})">
-            <span class="i-type">${inq.type}</span>
-            <span class="i-title">${esc(inq.title)}</span>
-            <span class="sb ${SC[inq.status] || 'sb-p'}">${SL[inq.status] || '⏳ 미처리'}</span>
-          </div>
+                <div class="inq-card ${inq.detailOpen ? 'expanded' : ''}">
+                    <div class="ir1" onclick="toggleDetail(${inq.id})">
+                        <span class="i-type">${inq.type}</span>
+                        <span class="i-title">${esc(inq.title)}</span>
+                        <span class="sb ${SC[inq.status] || 'sb-p'}">${SL[inq.status] || '⏳ 미처리'}</span>
+                    </div>
 
-          <div class="ir2" onclick="toggleDetail(${inq.id})">
-            <span class="i-meta">#${inq.id}</span>
-            <span class="i-dot"></span>
-            <span class="i-meta">${esc(inq.email)}</span>
-            <span class="i-dot"></span>
-            <span class="i-meta">🕒 ${inq.date}</span>
-          </div>
+                    <div class="ir2" onclick="toggleDetail(${inq.id})">
+                        <span class="i-meta">#${inq.id}</span>
+                        <span class="i-dot"></span>
+                        <span class="i-meta">${esc(inq.email)}</span>
+                        <span class="i-dot"></span>
+                        <span class="i-meta">🕒 ${inq.date}</span>
+                    </div>
 
-          <div class="inq-detail ${inq.detailOpen ? 'show' : ''}">
-            <div class="body-text">${esc(inq.body)}</div>
+                    <div class="inq-detail ${inq.detailOpen ? 'show' : ''}">
+                        <div class="body-text">${esc(inq.body)}</div>
 
-            ${attachmentsHtml}
+                        ${attachmentsHtml}
 
-            <div class="d-actions">
-              <span class="sc-lbl">상태 변경 :</span>
-              <select class="sts-sel" onchange="changeStatus(${inq.id}, this.value)" onclick="event.stopPropagation()">
-                <option value="미처리" ${inq.status === '미처리' ? 'selected' : ''}>⏳ 미처리</option>
-                <option value="처리중" ${inq.status === '처리중' ? 'selected' : ''}>🔄 처리중</option>
-                <option value="처리완료" ${inq.status === '처리완료' ? 'selected' : ''}>✅ 처리완료</option>
-              </select>
-            </div>
+                        <div class="d-actions">
+                            <span class="sc-lbl">상태 변경 :</span>
+                            <select class="sts-sel" onchange="changeStatus(${inq.id}, this.value)" onclick="event.stopPropagation()">
+                                <option value="미처리" ${inq.status === '미처리' ? 'selected' : ''}>⏳ 미처리</option>
+                                <option value="처리중" ${inq.status === '처리중' ? 'selected' : ''}>🔄 처리중</option>
+                                <option value="처리완료" ${inq.status === '처리완료' ? 'selected' : ''}>✅ 처리완료</option>
+                            </select>
+                        </div>
 
-            ${repliesHtml}
+                        ${repliesHtml}
 
-            <textarea class="reply-ta" id="reply-${inq.id}" placeholder="답변을 작성하세요..." onclick="event.stopPropagation()"></textarea>
-            <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px;">
-              <button type="button" class="btn-sm" onclick="event.stopPropagation(); deleteInquiry(${inq.id})">삭제</button>
-              <button type="button" class="btn-sm btn-accent" onclick="event.stopPropagation(); saveReply(${inq.id})">답변 등록</button>
-            </div>
-          </div>
-        </div>
-      `;
+                        <textarea class="reply-ta" id="reply-${inq.id}" placeholder="답변을 작성하세요..." onclick="event.stopPropagation()"></textarea>
+                        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px;">
+                            <button type="button" class="btn-sm" onclick="event.stopPropagation(); deleteInquiry(${inq.id})">삭제</button>
+                            <button type="button" class="btn-sm btn-accent" onclick="event.stopPropagation(); saveReply(${inq.id})">답변 등록</button>
+                        </div>
+                    </div>
+                </div>
+            `;
         }).join('');
     }
 
@@ -645,9 +768,7 @@
             return;
         }
 
-        inquiries.forEach(function(i) {
-            i.detailOpen = false;
-        });
+        inquiries.forEach(function(i) { i.detailOpen = false; });
 
         inquiry.detailOpen = true;
         fetchReplies(id);
@@ -662,42 +783,128 @@
             return;
         }
 
-        fetch("/api/admin/replies/" + id, {
+        api("/api/admin/replies/" + id, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ content: content })
         })
             .then(function(res) {
+                if (res.status === 401) {
+                    showLogin();
+                    throw new Error("인증 필요");
+                }
                 if (!res.ok) throw new Error("답변 저장 실패");
                 return res.json();
             })
             .then(function() {
-                return fetch("/api/admin/inquiries/" + id + "/status", {
+                return api("/api/admin/inquiries/" + id + "/status", {
                     method: "PATCH",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ status: "처리중" })
                 });
             })
             .then(function(res) {
+                if (res.status === 401) {
+                    showLogin();
+                    throw new Error("인증 필요");
+                }
                 if (!res.ok) throw new Error("상태 변경 실패");
                 return res.json();
             })
             .then(function() {
+                document.getElementById('reply-' + id).value = "";
                 loadInquiries(id);
             })
             .catch(function(err) {
                 console.error(err);
-                alert("답변 저장 또는 상태 변경 실패");
+                if (err.message !== "인증 필요") alert("답변 저장 또는 상태 변경 실패");
+            });
+    }
+
+    function editReply(inquiryId, replyId, content) {
+        var textarea = document.getElementById('reply-' + inquiryId);
+        textarea.value = content;
+        textarea.focus();
+
+        var btnArea = textarea.nextElementSibling;
+        btnArea.innerHTML = `
+            <button type="button" class="btn-sm" onclick="event.stopPropagation(); deleteInquiry(${inquiryId})">삭제</button>
+            <button type="button" class="btn-sm" onclick="event.stopPropagation(); cancelEdit(${inquiryId})">취소</button>
+            <button type="button" class="btn-sm btn-accent" onclick="event.stopPropagation(); updateReply(${inquiryId}, ${replyId})">수정 저장</button>
+        `;
+    }
+
+    function updateReply(inquiryId, replyId) {
+        var textarea = document.getElementById('reply-' + inquiryId);
+        var content = textarea.value.trim();
+
+        if (!content) {
+            alert("답변을 입력하세요");
+            return;
+        }
+
+        api("/api/admin/replies/edit/" + replyId, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ content: content })
+        })
+            .then(function(res) {
+                if (res.status === 401) {
+                    showLogin();
+                    throw new Error("인증 필요");
+                }
+                if (!res.ok) throw new Error("답변 수정 실패");
+                return res.json();
+            })
+            .then(function() {
+                textarea.value = "";
+                loadInquiries(inquiryId);
+            })
+            .catch(function(err) {
+                console.error(err);
+                if (err.message !== "인증 필요") alert("답변 수정 실패");
+            });
+    }
+
+    function cancelEdit(inquiryId) {
+        document.getElementById('reply-' + inquiryId).value = "";
+        loadInquiries(inquiryId);
+    }
+
+    function deleteReply(inquiryId, replyId) {
+        if (!confirm("이 답변을 삭제할까요?")) return;
+
+        api("/api/admin/replies/" + replyId, {
+            method: "DELETE"
+        })
+            .then(function(res) {
+                if (res.status === 401) {
+                    showLogin();
+                    throw new Error("인증 필요");
+                }
+                if (!res.ok) throw new Error("답변 삭제 실패");
+                return res.json();
+            })
+            .then(function() {
+                loadInquiries(inquiryId);
+            })
+            .catch(function(err) {
+                console.error(err);
+                if (err.message !== "인증 필요") alert("답변 삭제 실패");
             });
     }
 
     function changeStatus(id, value) {
-        fetch("/api/admin/inquiries/" + id + "/status", {
+        api("/api/admin/inquiries/" + id + "/status", {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ status: value })
         })
             .then(function(res) {
+                if (res.status === 401) {
+                    showLogin();
+                    throw new Error("인증 필요");
+                }
                 if (!res.ok) throw new Error("상태 변경 실패");
                 return res.json();
             })
@@ -706,17 +913,21 @@
             })
             .catch(function(err) {
                 console.error(err);
-                alert("상태 변경 실패");
+                if (err.message !== "인증 필요") alert("상태 변경 실패");
             });
     }
 
     function deleteInquiry(id) {
         if (!confirm("이 문의를 삭제할까요?")) return;
 
-        fetch("/api/admin/inquiries/" + id, {
+        api("/api/admin/inquiries/" + id, {
             method: "DELETE"
         })
             .then(function(res) {
+                if (res.status === 401) {
+                    showLogin();
+                    throw new Error("인증 필요");
+                }
                 if (!res.ok) throw new Error("삭제 실패");
                 return res.json();
             })
@@ -726,14 +937,12 @@
             })
             .catch(function(err) {
                 console.error(err);
-                alert("삭제 실패");
+                if (err.message !== "인증 필요") alert("삭제 실패");
             });
     }
 
     function applyF(el) {
-        document.querySelectorAll('.fi').forEach(function(i) {
-            i.classList.remove('active');
-        });
+        document.querySelectorAll('.fi').forEach(function(i) { i.classList.remove('active'); });
         el.classList.add('active');
         curFilter = el.dataset.f;
         document.getElementById('listTitle').textContent = (curFilter === '전체' ? '전체 문의' : curFilter);
@@ -741,9 +950,7 @@
     }
 
     function applyS(status, el) {
-        document.querySelectorAll('.stab').forEach(function(b) {
-            b.classList.remove('active');
-        });
+        document.querySelectorAll('.stab').forEach(function(b) { b.classList.remove('active'); });
         el.classList.add('active');
         curStatus = status;
         renderAdmin();
@@ -766,17 +973,42 @@
         renderAdmin();
     }
 
-    function logout() {
-        fetch("/logout", {
-            method: "POST"
+    function adminLogin() {
+        const id = document.getElementById("adminId").value;
+        const pw = document.getElementById("adminPw").value;
+
+        fetch("/api/admin/login", {
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({ id:id, pw:pw })
         })
-            .then(function() {
-                window.location.href = "/index.html";
+            .then(function(res){
+                if(!res.ok) throw new Error("로그인 실패");
+                return res.json();
             })
-            .catch(function(err) {
-                console.error(err);
-                alert("로그아웃 실패");
+            .then(function(data){
+                localStorage.setItem("adminToken", data.token);
+                hideLogin();
+                loadInquiries();
+            })
+            .catch(function(){
+                document.getElementById("loginErr").style.display="block";
             });
+    }
+
+    function showLogin() {
+        document.getElementById("loginWrap").style.display = "flex";
+    }
+
+    function hideLogin() {
+        document.getElementById("loginWrap").style.display = "none";
+        document.getElementById("loginErr").style.display = "none";
+    }
+
+    function logout() {
+        localStorage.removeItem("adminToken");
+        showLogin();
+        document.getElementById("adminPw").value = "";
     }
 
     function esc(s) {
@@ -787,8 +1019,28 @@
             .replace(/\n/g, '<br>');
     }
 
+    function jsEsc(s) {
+        return String(s)
+            .replace(/\\/g, '\\\\')
+            .replace(/'/g, "\\'")
+            .replace(/\n/g, "\\n")
+            .replace(/\r/g, "");
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
-        loadInquiries();
+        const token = localStorage.getItem("adminToken");
+        if (token) {
+            hideLogin();
+            loadInquiries();
+        } else {
+            showLogin();
+        }
+
+        document.getElementById("adminPw").addEventListener("keydown", function(e) {
+            if (e.key === "Enter") {
+                adminLogin();
+            }
+        });
     });
 </script>
 </body>

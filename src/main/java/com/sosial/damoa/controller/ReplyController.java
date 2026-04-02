@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin/replies")
@@ -34,10 +35,8 @@ public class ReplyController {
                     inquiry.getTitle(),
                     reply.getContent()
             );
-            System.out.println("메일 발송 성공 -> " + inquiry.getEmail());
         } catch (Exception e) {
             System.out.println("메일 발송 실패 -> " + e.getMessage());
-            e.printStackTrace();
         }
 
         return savedReply;
@@ -46,5 +45,24 @@ public class ReplyController {
     @GetMapping("/{inquiryId}")
     public List<Reply> getReplies(@PathVariable Long inquiryId) {
         return replyRepository.findByInquiryId(inquiryId);
+    }
+
+    @PutMapping("/edit/{replyId}")
+    public Reply updateReply(@PathVariable Long replyId, @RequestBody Reply req) {
+        Reply reply = replyRepository.findById(replyId)
+                .orElseThrow(() -> new RuntimeException("답변 없음"));
+
+        reply.setContent(req.getContent());
+        return replyRepository.save(reply);
+    }
+
+    @DeleteMapping("/{replyId}")
+    public Map<String, String> deleteReply(@PathVariable Long replyId) {
+        Reply reply = replyRepository.findById(replyId)
+                .orElseThrow(() -> new RuntimeException("답변 없음"));
+
+        replyRepository.delete(reply);
+
+        return Map.of("result", "ok");
     }
 }

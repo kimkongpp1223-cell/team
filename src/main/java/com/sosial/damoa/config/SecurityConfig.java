@@ -1,15 +1,16 @@
 package com.sosial.damoa.config;
 
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import java.io.IOException;
 
 @Configuration
 public class SecurityConfig {
@@ -19,37 +20,40 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/index.html", "/css/**", "/js/**").permitAll()
-                        .requestMatchers("/api/public/**").permitAll()
-                        .requestMatchers("/admin.html").authenticated()
-                        .requestMatchers("/api/admin/**").authenticated()
                         .anyRequest().permitAll()
                 )
-                .formLogin(form -> form
-                        .defaultSuccessUrl("/admin.html", true)
-                        .permitAll()
-                )
-                .logout(logout -> logout
-                        .logoutSuccessUrl("/index.html")
-                        .permitAll()
-                )
-                .httpBasic(Customizer.withDefaults());
+                .addFilterBefore(new AdminTokenFilter(), org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
-    @Bean
-    public InMemoryUserDetailsManager userDetailsService(PasswordEncoder passwordEncoder) {
-        UserDetails admin = User.withUsername("admin")
-                .password(passwordEncoder.encode("1234"))
-                .roles("ADMIN")
-                .build();
+    static class AdminTokenFilter extends OncePerRequestFilter {
+        @Override
+        protected void doFilterInternal(HttpServletRequest request,
+                                        HttpServletResponse response,
+                                        FilterChain filterChain) throws ServletException, IOException {
 
-        return new InMemoryUserDetailsManager(admin);
-    }
+            String uri = request.getRequestURI();
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+            // 관리자 로그인은 통과
+            if ("/api/admin/login".equals(uri)) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+
+            // 관리자 API만 토큰 검사
+            if (uri.startsWith("/api/admin/")) {
+                String token = request.getHeader("Authorization");
+
+                if (token == null || !token.equals("admin-token")) {
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    response.setContentType("text/plain; charset=UTF-8");
+                    response.getWriter().write("Unauthorized");
+                    return;
+                }
+            }
+
+            filterChain.doFilter(request, response);
+        }
     }
 }
