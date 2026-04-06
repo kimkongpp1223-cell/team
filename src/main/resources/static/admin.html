@@ -525,6 +525,49 @@
         });
     }
 
+    function downloadAttachment(inquiryId, index) {
+        api("/api/admin/inquiries/" + inquiryId + "/attachments/" + index)
+            .then(function(res) {
+                if (res.status === 401) {
+                    showLogin();
+                    throw new Error("인증 필요");
+                }
+                if (!res.ok) throw new Error("다운로드 실패");
+
+                var disposition = res.headers.get("Content-Disposition") || "";
+                var fileName = "download";
+
+                var matchUtf8 = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+                var matchBasic = disposition.match(/filename="?([^"]+)"?/i);
+
+                if (matchUtf8 && matchUtf8[1]) {
+                    fileName = decodeURIComponent(matchUtf8[1]);
+                } else if (matchBasic && matchBasic[1]) {
+                    fileName = matchBasic[1];
+                }
+
+                return res.blob().then(function(blob) {
+                    return { blob: blob, fileName: fileName };
+                });
+            })
+            .then(function(data) {
+                var url = window.URL.createObjectURL(data.blob);
+                var a = document.createElement("a");
+                a.href = url;
+                a.download = data.fileName;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+            })
+            .catch(function(err) {
+                console.error(err);
+                if (err.message !== "인증 필요") {
+                    alert("첨부파일 다운로드 실패");
+                }
+            });
+    }
+
     function loadInquiries(openId) {
         api("/api/admin/inquiries")
             .then(function(res) {
@@ -705,7 +748,7 @@
                         <div style="display:flex;flex-direction:column;gap:6px;">
                             ${inq.attachmentNames.map(function(name, index) {
                     return `
-                                    <a class="attachment-link reply-item" href="/api/admin/inquiries/${inq.id}/attachments/${index}">
+                                    <a class="attachment-link reply-item" href="javascript:void(0)" onclick="event.stopPropagation(); downloadAttachment(${inq.id}, ${index})">
                                         📎 ${esc(name)}
                                     </a>
                                 `;
