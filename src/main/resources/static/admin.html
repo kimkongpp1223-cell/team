@@ -3,376 +3,609 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>소셜다모아 — 관리자 문의 관리</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+    <title>소셜다모아 관리자</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;800;900&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg:#F8FBFC; --surface:#FFFFFF; --surface2:#F1F5F9; --surface3:#E8EEF5;
-            --border:rgba(71,85,105,0.12); --border2:rgba(71,85,105,0.18);
-            --primary:#14B8A6; --secondary:#6366F1;
-            --text:#0F172A; --text2:#475569; --text3:#64748B;
-            --radius:18px; --radius-sm:12px;
+        :root{
+            --bg:#f8fbfc; --surface:#fff; --surface2:#f1f5f9; --surface3:#e8eef5;
+            --border:rgba(71,85,105,.14); --border2:rgba(71,85,105,.2);
+            --primary:#14b8a6; --secondary:#6366f1;
+            --danger:#ef4444; --warn:#f59e0b; --success:#10b981;
+            --text:#0f172a; --text2:#475569; --text3:#64748b;
+            --radius:18px;
         }
-        *{margin:0;padding:0;box-sizing:border-box;}
+
+        *{margin:0;padding:0;box-sizing:border-box}
+
         body{
-            background:
-                    radial-gradient(circle at 15% 20%,rgba(20,184,166,0.09),transparent 28%),
-                    radial-gradient(circle at 85% 15%,rgba(99,102,241,0.10),transparent 30%),
-                    linear-gradient(180deg,#FFFFFF 0%,#F8FBFC 100%);
-            color:var(--text);
             font-family:'Noto Sans KR',sans-serif;
+            background:
+                    radial-gradient(circle at 12% 18%,rgba(20,184,166,.08),transparent 28%),
+                    radial-gradient(circle at 84% 12%,rgba(99,102,241,.09),transparent 28%),
+                    linear-gradient(180deg,#fff 0%,#f8fbfc 100%);
+            color:var(--text);
             min-height:100vh;
         }
-        .wrapper{max-width:1200px;margin:0 auto;padding:0 24px 80px;}
+
+        .login-wrap{
+            position:fixed; inset:0; background:rgba(15,23,42,.35);
+            backdrop-filter:blur(8px);
+            display:none; align-items:center; justify-content:center;
+            padding:20px; z-index:100;
+        }
+
+        .login-box{
+            width:100%; max-width:420px;
+            background:rgba(255,255,255,.96);
+            border:1px solid var(--border);
+            border-radius:24px;
+            box-shadow:0 30px 60px rgba(15,23,42,.18);
+            padding:28px;
+        }
+
+        .login-logo{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+        .login-logo-mark{
+            width:42px;height:42px;border-radius:14px;
+            background:linear-gradient(135deg,var(--primary),var(--secondary));
+            color:#fff;display:flex;align-items:center;justify-content:center;
+            font-weight:900;font-size:18px;
+        }
+        .login-logo-text{font-size:19px;font-weight:800}
+        .login-sub{font-size:12px;color:var(--text3);margin-bottom:6px}
+        .login-title{font-size:24px;font-weight:900;margin-bottom:18px}
+        .login-input{
+            width:100%; padding:13px 14px; margin-bottom:10px;
+            border:1px solid var(--border2); border-radius:12px;
+            background:#fff; font-size:14px;
+        }
+        .login-btn{
+            width:100%; padding:13px 14px; border:none; border-radius:12px;
+            background:linear-gradient(135deg,#0f766e,#334155);
+            color:#fff; font-weight:800; font-size:14px; cursor:pointer; margin-top:4px;
+        }
+        .login-err{
+            margin-top:12px;font-size:13px;color:var(--danger);
+            display:none;white-space:pre-wrap;line-height:1.6;
+        }
+
+        .wrapper{max-width:1320px;margin:0 auto;padding:0 24px 80px}
         header{
             display:flex;align-items:center;justify-content:space-between;
-            padding:28px 0 20px;border-bottom:1px solid var(--border);
+            padding:28px 0 20px;border-bottom:1px solid var(--border);gap:12px;
         }
-        .logo{display:flex;align-items:center;gap:12px;}
+        .logo{display:flex;align-items:center;gap:12px}
         .logo-mark{
             width:38px;height:38px;border-radius:12px;
             background:linear-gradient(135deg,var(--primary),var(--secondary));
             display:flex;align-items:center;justify-content:center;
             color:#fff;font-size:18px;font-weight:900;
-            box-shadow:0 0 24px rgba(20,184,166,0.18);
+            box-shadow:0 0 24px rgba(20,184,166,.35);flex-shrink:0;
         }
-        .logo-text{font-size:18px;font-weight:700;}
-        .header-right{display:flex;align-items:center;gap:10px;}
+        .logo-text{font-size:18px;font-weight:800}
+        .header-right{display:flex;align-items:center;gap:10px}
         .header-badge{
-            background:rgba(99,102,241,0.08);
-            border:1px solid rgba(99,102,241,0.18);
-            border-radius:999px;
-            padding:7px 14px;
-            font-size:12px;
-            color:#4338CA;
+            background:rgba(20,184,166,.08); border:1px solid rgba(20,184,166,.18);
+            border-radius:999px; padding:7px 14px; font-size:12px; color:#0f766e;
         }
         .logout-btn{
-            padding:8px 14px;border:none;border-radius:10px;
-            background:#ef4444;color:#fff;cursor:pointer;font-weight:700;
+            border:none; background:#0f172a; color:#fff; cursor:pointer;
+            border-radius:12px; padding:10px 14px; font-size:13px; font-weight:700;
         }
 
-        .page-title{padding:42px 0 34px;}
+        .page-title{
+            margin-top:28px; padding:30px 30px 24px; border-radius:20px;
+            border:1px solid var(--border);
+            background:linear-gradient(180deg,rgba(255,255,255,.96),rgba(248,251,252,.98));
+            box-shadow:0 18px 40px rgba(15,23,42,.08);
+        }
         .page-title h1{
             font-family:'DM Serif Display',serif;
-            font-size:clamp(30px,4vw,44px);
-            font-weight:400;line-height:1.12;
+            font-size:clamp(30px,4vw,44px); font-weight:400; line-height:1.1;
         }
-        .page-title h1 em{font-style:italic;color:var(--primary);}
-        .page-title p{margin-top:12px;color:var(--text2);font-size:14px;font-weight:300;}
+        .page-title h1 em{
+            font-style:italic;
+            background:linear-gradient(135deg,var(--primary),var(--secondary));
+            -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+        }
+        .page-title p{margin-top:10px;color:var(--text2);font-size:15px}
+
+        .tab-nav{
+            margin-top:20px;
+            display:grid; grid-template-columns:repeat(3,1fr); gap:10px;
+        }
+        .tab-btn{
+            height:56px; border-radius:14px; border:1px solid var(--border);
+            background:rgba(241,245,249,.88); color:var(--text2);
+            font-size:15px; font-weight:800; cursor:pointer;
+        }
+        .tab-btn.active{
+            background:linear-gradient(135deg,var(--primary),var(--secondary));
+            color:#fff; border-color:transparent; box-shadow:0 10px 28px rgba(20,184,166,.22);
+        }
 
         .summary-grid{
-            display:grid;grid-template-columns:repeat(4,1fr);
-            gap:12px;margin-bottom:24px;
+            margin-top:18px;
+            display:grid; grid-template-columns:repeat(4,1fr); gap:14px;
         }
-        @media(max-width:680px){.summary-grid{grid-template-columns:repeat(2,1fr);}}
-
         .s-card{
-            background:#fff;border:1px solid var(--border);border-radius:12px;
-            padding:16px 18px;box-shadow:0 8px 24px rgba(15,23,42,0.06);
+            border:1px solid var(--border); border-radius:18px;
+            background:rgba(255,255,255,.92); padding:18px 18px 16px;
+            box-shadow:0 12px 26px rgba(15,23,42,.05);
         }
-        .s-card .sl{font-size:11px;color:var(--text3);font-weight:600;margin-bottom:6px;}
-        .s-card .sn{font-size:26px;font-weight:900;line-height:1;}
-        .s-card .ss{font-size:11px;color:var(--text3);margin-top:4px;}
+        .sl{font-size:13px;color:var(--text3);font-weight:700}
+        .sn{margin-top:8px;font-size:28px;font-weight:900;color:var(--text)}
+        .ss{margin-top:6px;font-size:12px;color:var(--text3)}
+
+        .section{display:none}
+        .section.active{display:block}
 
         .admin-grid{
-            display:grid;grid-template-columns:240px 1fr;gap:24px;align-items:start;
+            margin-top:18px;
+            display:grid; grid-template-columns:300px minmax(0,1fr); gap:18px;
         }
-        @media(max-width:860px){.admin-grid{grid-template-columns:1fr;}}
 
         .panel{
-            background:#fff;border:1px solid var(--border);border-radius:18px;
-            overflow:hidden;box-shadow:0 18px 40px rgba(15,23,42,0.08);
+            border:1px solid var(--border); border-radius:18px;
+            background:linear-gradient(180deg,rgba(255,255,255,.96),rgba(248,251,252,.98));
+            box-shadow:0 16px 32px rgba(15,23,42,.06);
+            overflow:hidden;
         }
         .panel-header{
-            padding:18px 22px 16px;border-bottom:1px solid var(--border);
-            display:flex;align-items:center;gap:10px;
+            padding:16px 18px; border-bottom:1px solid var(--border);
+            display:flex; align-items:center; gap:10px; justify-content:space-between;
         }
-        .panel-body{padding:20px 22px 22px;}
+        .panel-header-left{
+            display:flex; align-items:center; gap:10px;
+        }
         .panel-icon{
-            width:30px;height:30px;border-radius:10px;display:flex;
-            align-items:center;justify-content:center;font-size:14px;
-            background:rgba(20,184,166,0.16);
+            width:32px;height:32px;border-radius:10px;
+            display:flex;align-items:center;justify-content:center;
+            background:rgba(20,184,166,.14); font-size:14px;
         }
+        .panel-header h2{font-size:14px;font-weight:800}
+        .panel-body{padding:18px}
 
-        .filter-panel .panel-body{display:flex;flex-direction:column;gap:4px;}
         .fi{
-            padding:10px 14px;border-radius:10px;font-size:13px;font-weight:600;
-            cursor:pointer;transition:all .18s;color:var(--text2);
-            display:flex;align-items:center;justify-content:space-between;
+            display:flex; align-items:center; justify-content:space-between;
+            gap:10px; padding:12px 14px; border-radius:12px;
+            border:1px solid var(--border); background:#fff; cursor:pointer;
+            font-size:13px; font-weight:700; color:var(--text2); margin-bottom:10px;
         }
-        .fi:hover{background:rgba(20,184,166,0.06);color:var(--text);}
-        .fi.active{
-            background:linear-gradient(135deg,rgba(20,184,166,0.16),rgba(99,102,241,0.10));
+        .fi.active, .stab.active{
+            border-color:rgba(20,184,166,.45);
+            box-shadow:0 0 0 3px rgba(20,184,166,.08);
             color:var(--text);
-            border:1px solid rgba(20,184,166,0.22);
         }
         .fc{
-            background:rgba(20,184,166,0.12);border-radius:999px;
-            padding:2px 8px;font-size:11px;font-weight:700;color:#0F766E;
-        }
-
-        .stab-bar{display:flex;gap:6px;flex-wrap:wrap;}
-        .stab{
-            padding:5px 12px;border-radius:9px;font-size:11px;font-weight:700;
-            cursor:pointer;border:1px solid var(--border2);
-            background:rgba(241,245,249,0.96);color:var(--text3);
-        }
-        .stab.active{
-            background:linear-gradient(135deg,var(--primary),var(--secondary));
-            color:#fff;border:none;
+            min-width:26px; text-align:center; padding:4px 8px; border-radius:999px;
+            background:var(--surface2); font-size:12px; color:var(--text3);
         }
 
         .search-row{
-            display:flex;gap:10px;align-items:center;flex-wrap:wrap;
-            margin-bottom:14px;
+            display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px;
         }
-        .search-input{
-            flex:1;min-width:220px;
-            background:rgba(241,245,249,0.96);
-            border:1px solid var(--border2);
-            border-radius:12px;
-            padding:11px 14px;
-            font-size:13px;
-            color:var(--text);
-            outline:none;
+        .search-input, .sel, .field input, .field textarea, .field select{
+            width:100%; border:1px solid var(--border2); background:#fff;
+            border-radius:12px; padding:12px 14px; font-size:14px; color:var(--text);
+            font-family:'Noto Sans KR',sans-serif;
         }
-        .search-input:focus{
-            border-color:rgba(20,184,166,0.45);
-            box-shadow:0 0 0 4px rgba(20,184,166,0.10);
+        .search-input{flex:1; min-width:220px}
+        .sel{width:auto; min-width:140px}
+
+        .status-tabs{
+            display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px;
         }
-        .sort-select{
-            min-width:140px;
-            background:rgba(241,245,249,0.96);
-            border:1px solid var(--border2);
-            border-radius:12px;
-            padding:11px 14px;
-            font-size:13px;
-            color:var(--text);
-            outline:none;
-        }
-        .sort-select:focus{
-            border-color:rgba(20,184,166,0.45);
-            box-shadow:0 0 0 4px rgba(20,184,166,0.10);
-        }
-        .search-info{
-            font-size:12px;color:var(--text3);margin-bottom:4px;
+        .stab{
+            border:1px solid var(--border); background:#fff; color:var(--text2);
+            border-radius:999px; padding:10px 14px; cursor:pointer; font-size:13px; font-weight:700;
         }
 
-        .inq-list{display:flex;flex-direction:column;gap:12px;}
-        .inq-card{
-            background:#fff;border:1px solid var(--border);border-radius:14px;
-            padding:18px 20px;transition:all .2s;
-            box-shadow:0 4px 16px rgba(15,23,42,0.05);
-        }
-        .inq-card:hover{
-            transform:translateY(-1px);
-            box-shadow:0 8px 24px rgba(15,23,42,0.08);
-        }
-        .inq-card.expanded{
-            border-color:rgba(20,184,166,0.35);
-            box-shadow:0 12px 32px rgba(20,184,166,0.12);
-        }
-
-        .ir1{
-            display:flex;align-items:center;gap:8px;margin-bottom:6px;cursor:pointer;
-        }
-        .ir2{
-            display:flex;align-items:center;gap:6px;flex-wrap:wrap;cursor:pointer;
+        .accordion-card{
+            border:1px solid var(--border); background:#fff;
+            border-radius:18px; padding:16px; margin-bottom:12px;
+            box-shadow:0 8px 20px rgba(15,23,42,.04);
         }
 
         .i-type{
-            padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;
-            background:rgba(99,102,241,0.10);color:#4338CA;
-            border:1px solid rgba(99,102,241,0.18);
-        }
-        .i-title{
-            font-size:14px;font-weight:700;flex:1;min-width:0;
-            overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-        }
-        .i-meta{font-size:11px;color:var(--text3);}
-        .i-dot{
-            width:3px;height:3px;border-radius:50%;
-            background:var(--text3);display:inline-block;
+            background:rgba(99,102,241,.1); color:#4338ca; border:1px solid rgba(99,102,241,.18);
+            border-radius:999px; padding:5px 10px; font-size:11px; font-weight:800;
+            flex-shrink:0;
         }
 
         .sb{
-            padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700;
+            border-radius:999px; padding:5px 10px; font-size:11px; font-weight:800;
+            flex-shrink:0;
         }
-        .sb-p{background:rgba(245,158,11,0.12);color:#92400E;border:1px solid rgba(245,158,11,0.22);}
-        .sb-r{background:rgba(99,102,241,0.12);color:#3730A3;border:1px solid rgba(99,102,241,0.22);}
-        .sb-d{background:rgba(20,184,166,0.12);color:#0F766E;border:1px solid rgba(20,184,166,0.22);}
-
-        .inq-detail{
-            display:none;margin-top:16px;padding-top:16px;border-top:1px solid var(--border);
-        }
-        .inq-detail.show{display:block;}
+        .sb-p{background:rgba(249,115,22,.12); color:#c2410c}
+        .sb-r{background:rgba(59,130,246,.12); color:#1d4ed8}
+        .sb-d{background:rgba(16,185,129,.12); color:#047857}
 
         .body-text{
-            font-size:13px;line-height:1.8;color:var(--text2);
-            background:rgba(241,245,249,0.7);border-radius:10px;
-            padding:14px 16px;margin-bottom:14px;
-            white-space:pre-wrap;word-break:break-word;
+            background:var(--surface2); border:1px solid var(--border); border-radius:14px;
+            padding:14px 16px; line-height:1.8; color:var(--text2); white-space:pre-wrap;
         }
-
-        .attachment-box{margin-bottom:14px;}
-        .attachment-link{
-            display:block;text-decoration:none;color:var(--text2);
-        }
-        .attachment-link:hover{text-decoration:underline;}
-
-        .d-actions{
-            display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;
-        }
-        .sc-lbl{font-size:12px;color:var(--text3);font-weight:600;}
-        .sts-sel{
-            padding:7px 12px;border-radius:9px;font-size:12px;font-weight:600;
-            border:1px solid var(--border2);
-            background:rgba(241,245,249,0.96);color:var(--text2);
-        }
-
-        .reply-list{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
-        .reply-item{
-            background:linear-gradient(135deg,rgba(20,184,166,0.06),rgba(99,102,241,0.04));
-            border:1px solid rgba(20,184,166,0.14);
-            border-radius:10px;padding:11px 14px;
-            font-size:12px;line-height:1.7;color:var(--text2);
-        }
-        .reply-top{
-            display:flex;
-            align-items:center;
-            justify-content:space-between;
-            gap:10px;
-            margin-bottom:4px;
-        }
-        .reply-meta{font-size:11px;color:var(--text3);font-weight:600;}
-        .reply-actions{
-            display:flex;
-            align-items:center;
-            gap:10px;
-        }
-        .reply-edit-btn, .reply-delete-btn{
-            border:none;
-            background:transparent;
-            font-size:12px;
-            font-weight:700;
-            cursor:pointer;
-        }
-        .reply-edit-btn{color:#4f46e5;}
-        .reply-delete-btn{color:#ef4444;}
 
         .reply-ta{
-            width:100%;background:rgba(241,245,249,0.92);
-            border:1px solid var(--border2);border-radius:12px;
-            color:var(--text);font-family:'Noto Sans KR',sans-serif;
-            font-size:13px;padding:11px 14px;resize:none;min-height:80px;
+            width:100%; margin-top:12px; border:1px solid var(--border2); background:#fff;
+            border-radius:12px; padding:12px 14px; min-height:120px; resize:vertical;
+            font-family:'Noto Sans KR',sans-serif;
         }
 
-        .btn-sm{
-            padding:7px 13px;border-radius:9px;font-size:12px;font-weight:600;
-            cursor:pointer;border:1px solid var(--border2);
-            background:rgba(241,245,249,0.96);color:var(--text2);
+        .btn-main, .btn-line, .btn-danger, .btn-add{
+            border:none; border-radius:12px; padding:11px 14px; cursor:pointer;
+            font-size:13px; font-weight:800;
         }
-        .btn-accent{
+        .btn-main{
+            background:linear-gradient(135deg,var(--primary),var(--secondary)); color:#fff;
+        }
+        .btn-line{
+            background:#fff; color:var(--text2); border:1px solid var(--border2);
+        }
+        .btn-danger{
+            background:#fff1f2; color:#be123c; border:1px solid rgba(244,63,94,.18);
+        }
+        .btn-add{
             background:linear-gradient(135deg,var(--primary),var(--secondary));
-            color:#fff;border:none;
+            color:#fff;
+            box-shadow:0 10px 24px rgba(20,184,166,.18);
+        }
+
+        .accordion-header{
+            display:flex;
+            align-items:center;
+            gap:12px;
+            cursor:pointer;
+            user-select:none;
+        }
+
+        .accordion-title{
+            flex:1;
+            min-width:0;
+            font-size:15px;
+            font-weight:800;
+            color:var(--text);
+            line-height:1.5;
+            word-break:keep-all;
+        }
+
+        .accordion-meta{
+            display:flex;
+            align-items:center;
+            gap:8px;
+            flex-wrap:wrap;
+            flex-shrink:0;
+        }
+
+        .accordion-badge{
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            min-width:54px;
+            padding:5px 12px;
+            border-radius:999px;
+            font-size:11px;
+            font-weight:800;
+            background:rgba(99,102,241,.10);
+            color:#4338CA;
+            border:1px solid rgba(99,102,241,.18);
+            white-space:nowrap;
+        }
+
+        .accordion-date{
+            font-size:12px;
+            color:var(--text3);
+            font-weight:600;
+            white-space:nowrap;
+        }
+
+        .accordion-arrow{
+            width:28px;
+            height:28px;
+            border-radius:8px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            color:var(--text3);
+            font-size:13px;
+            transition:all .2s;
+            border:1px solid transparent;
+            flex-shrink:0;
+        }
+
+        .accordion-card.open .accordion-arrow{
+            transform:rotate(180deg);
+            color:#fff;
+            background:linear-gradient(135deg,var(--primary),var(--secondary));
+            box-shadow:0 6px 18px rgba(20,184,166,.18);
+        }
+
+        .accordion-body{
+            display:none;
+            margin-top:14px;
+            border-top:1px solid var(--border);
+            padding-top:14px;
+            animation:fadeIn .22s ease;
+        }
+
+        .accordion-card.open .accordion-body{
+            display:block;
+        }
+
+        .accordion-content{
+            background:var(--surface2);
+            border:1px solid var(--border);
+            border-radius:14px;
+            padding:14px 16px;
+            line-height:1.8;
+            color:var(--text2);
+            white-space:pre-wrap;
+        }
+
+        .accordion-actions{
+            display:flex;
+            justify-content:flex-end;
+            gap:8px;
+            margin-top:12px;
+            flex-wrap:wrap;
+            align-items:center;
+        }
+
+        .detail-meta{
+            margin-top:10px;
+            font-size:12px;
+            color:var(--text3);
+            line-height:1.7;
+        }
+
+        .attachment-box{
+            margin-top:14px;
+            border:1px solid var(--border);
+            border-radius:14px;
+            background:#fff;
+            padding:14px;
+        }
+
+        .attachment-title{
+            font-size:12px;
+            font-weight:800;
+            color:var(--text3);
+            margin-bottom:10px;
+        }
+
+        .attachment-link{
+            display:flex;
+            align-items:center;
+            gap:8px;
+            padding:11px 12px;
+            border:1px solid var(--border);
+            background:var(--surface2);
+            border-radius:10px;
+            color:var(--text2);
+            text-decoration:none;
+            font-size:13px;
+            line-height:1.5;
+            margin-top:8px;
+            word-break:break-all;
+        }
+
+        .attachment-link:first-of-type{
+            margin-top:0;
+        }
+
+        .reply-box{
+            margin-top:14px;
+            padding:14px;
+            border:1px solid var(--border);
+            border-radius:14px;
+            background:#fff;
+        }
+
+        .reply-meta{
+            font-size:12px;
+            font-weight:800;
+            color:var(--text3);
+            margin-bottom:10px;
+        }
+
+        .reply-card{
+            border:1px solid var(--border);
+            background:var(--surface2);
+            border-radius:14px;
+            padding:14px;
+            margin-top:10px;
+        }
+
+        .reply-card:first-of-type{
+            margin-top:0;
+        }
+
+        .reply-view-text{
+            white-space:pre-wrap;
+            color:var(--text2);
+            line-height:1.8;
+            font-size:13px;
+            word-break:break-word;
+        }
+
+        .reply-edit-ta{
+            width:100%;
+            min-height:110px;
+            border:1px solid var(--border2);
+            background:#fff;
+            border-radius:12px;
+            padding:12px 14px;
+            font-size:13px;
+            color:var(--text);
+            line-height:1.7;
+            font-family:'Noto Sans KR',sans-serif;
+            resize:vertical;
+        }
+
+        .reply-inline-actions{
+            display:flex;
+            justify-content:flex-end;
+            gap:8px;
+            margin-top:10px;
+            flex-wrap:wrap;
+        }
+
+        .reply-empty{
+            border:1px dashed var(--border2);
+            border-radius:12px;
+            padding:18px 14px;
+            text-align:center;
+            font-size:13px;
+            color:var(--text3);
+            background:rgba(241,245,249,.5);
+        }
+
+        .new-reply-box{
+            margin-top:14px;
+            border:1px solid var(--border);
+            border-radius:14px;
+            background:#fff;
+            padding:14px;
+        }
+
+        .new-reply-title{
+            font-size:12px;
+            font-weight:800;
+            color:var(--text3);
+            margin-bottom:10px;
         }
 
         .empty-list{
-            display:flex;flex-direction:column;align-items:center;
-            padding:54px 20px;color:var(--text3);text-align:center;
+            display:flex; flex-direction:column; align-items:center;
+            padding:54px 20px; color:var(--text3); text-align:center;
+            white-space:pre-wrap;
         }
-        .el-icon{font-size:36px;margin-bottom:12px;opacity:.5;}
+        .el-icon{font-size:36px; margin-bottom:12px; opacity:.5}
 
-        .login-wrap{
+        .modal-wrap{
             position:fixed;
             inset:0;
-            background:
-                    radial-gradient(circle at 20% 20%,rgba(20,184,166,0.12),transparent 28%),
-                    radial-gradient(circle at 80% 10%,rgba(99,102,241,0.12),transparent 30%),
-                    linear-gradient(180deg,#f8fafc 0%,#eef2f7 100%);
-            display:flex;
+            background:rgba(15,23,42,.42);
+            backdrop-filter:blur(8px);
+            display:none;
             align-items:center;
             justify-content:center;
-            z-index:9999;
-            padding:24px;
+            z-index:200;
+            padding:20px;
         }
-        .login-box{
+
+        .modal-wrap.show{
+            display:flex;
+        }
+
+        .modal-box{
             width:100%;
-            max-width:400px;
-            background:#fff;
-            padding:32px 28px;
-            border-radius:20px;
-            border:1px solid #e5e7eb;
-            box-shadow:0 24px 48px rgba(15,23,42,0.12);
+            max-width:620px;
+            background:rgba(255,255,255,.98);
+            border:1px solid var(--border);
+            border-radius:24px;
+            box-shadow:0 30px 60px rgba(15,23,42,.18);
+            overflow:hidden;
         }
-        .login-logo{
+
+        .modal-header{
+            padding:20px 22px 16px;
+            border-bottom:1px solid var(--border);
             display:flex;
             align-items:center;
-            gap:10px;
-            margin-bottom:8px;
+            justify-content:space-between;
+            gap:12px;
         }
-        .login-logo-mark{
+
+        .modal-header h3{
+            font-size:18px;
+            font-weight:900;
+            color:var(--text);
+        }
+
+        .modal-close{
             width:36px;
             height:36px;
-            border-radius:12px;
-            background:linear-gradient(135deg,var(--primary),var(--secondary));
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            color:#fff;
-            font-weight:900;
-            font-size:16px;
-        }
-        .login-logo-text{
-            font-size:18px;
-            font-weight:800;
-            color:#0f172a;
-        }
-        .login-sub{
-            font-size:12px;
-            color:#64748b;
-            margin-bottom:20px;
-        }
-        .login-title{
-            font-size:26px;
-            font-weight:800;
-            color:#0f172a;
-            margin-bottom:20px;
-            letter-spacing:-0.3px;
-        }
-        .login-input{
-            width:100%;
-            padding:13px 14px;
-            margin-bottom:12px;
-            border-radius:12px;
-            border:1px solid #dbe2ea;
-            background:#f8fafc;
-            font-size:14px;
-            outline:none;
-            transition:all .2s;
-        }
-        .login-input:focus{
-            border-color:rgba(20,184,166,0.45);
-            box-shadow:0 0 0 4px rgba(20,184,166,0.10);
-            background:#fff;
-        }
-        .login-btn{
-            width:100%;
-            padding:13px 14px;
             border:none;
             border-radius:12px;
-            background:linear-gradient(135deg,#0f766e,#334155);
-            color:#fff;
-            font-weight:800;
-            font-size:14px;
+            background:var(--surface2);
             cursor:pointer;
-            margin-top:4px;
+            font-size:16px;
+            color:var(--text2);
+            font-weight:900;
         }
-        .login-err{
-            margin-top:12px;
+
+        .modal-body{
+            padding:20px 22px;
+            display:grid;
+            gap:14px;
+        }
+
+        .field label{
+            display:block;
+            margin-bottom:8px;
             font-size:13px;
-            color:#ef4444;
+            font-weight:800;
+            color:var(--text);
+        }
+
+        .field textarea{
+            min-height:160px;
+            resize:vertical;
+        }
+
+        .modal-error{
             display:none;
+            margin:0 22px 14px;
+            padding:12px 14px;
+            border-radius:12px;
+            background:#fff1f2;
+            border:1px solid rgba(244,63,94,.18);
+            color:#be123c;
+            font-size:13px;
+            font-weight:700;
+            line-height:1.6;
+            white-space:pre-wrap;
+        }
+
+        .modal-error.show{
+            display:block;
+        }
+
+        .modal-actions{
+            padding:0 22px 22px;
+            display:flex;
+            justify-content:flex-end;
+            gap:10px;
+            flex-wrap:wrap;
+        }
+
+        @keyframes fadeIn {
+            from { opacity:0; transform:translateY(-4px); }
+            to { opacity:1; transform:translateY(0); }
+        }
+
+        @media (max-width:1100px){
+            .admin-grid{grid-template-columns:1fr}
+            .summary-grid{grid-template-columns:repeat(2,1fr)}
+        }
+
+        @media (max-width:760px){
+            .wrapper{padding:0 16px 56px}
+            header{flex-direction:column;align-items:flex-start}
+            .tab-nav{grid-template-columns:1fr}
+            .summary-grid{grid-template-columns:1fr}
+            .search-row{flex-direction:column}
+            .sel{width:100%}
+            .accordion-header{
+                align-items:flex-start;
+                flex-wrap:wrap;
+            }
+            .accordion-meta{
+                width:100%;
+            }
+            .accordion-arrow{
+                margin-left:auto;
+            }
         }
     </style>
 </head>
@@ -395,6 +628,75 @@
     </div>
 </div>
 
+<div id="noticeModal" class="modal-wrap">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3 id="noticeModalTitle">공지 추가</h3>
+            <button class="modal-close" onclick="closeNoticeModal()">✕</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="noticeId">
+
+            <div class="field">
+                <label for="noticeCategory">분류</label>
+                <select id="noticeCategory">
+                    <option value="공지">공지</option>
+                    <option value="업데이트">업데이트</option>
+                    <option value="정책">정책</option>
+                    <option value="보안">보안</option>
+                </select>
+            </div>
+
+            <div class="field">
+                <label for="noticeTitle">제목</label>
+                <input id="noticeTitle" maxlength="200" placeholder="공지 제목 입력">
+            </div>
+
+            <div class="field">
+                <label for="noticeContent">내용</label>
+                <textarea id="noticeContent" placeholder="공지 내용을 입력하세요"></textarea>
+            </div>
+        </div>
+        <div id="noticeModalError" class="modal-error"></div>
+        <div class="modal-actions">
+            <button class="btn-line" type="button" onclick="closeNoticeModal()">취소</button>
+            <button class="btn-main" type="button" onclick="saveNotice()">저장</button>
+        </div>
+    </div>
+</div>
+
+<div id="faqModal" class="modal-wrap">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3 id="faqModalTitle">FAQ 추가</h3>
+            <button class="modal-close" onclick="closeFaqModal()">✕</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="faqId">
+
+            <div class="field">
+                <label for="faqCategory">카테고리</label>
+                <input id="faqCategory" placeholder="예: 가입·연동, 시스템오류, 계정">
+            </div>
+
+            <div class="field">
+                <label for="faqQuestion">질문</label>
+                <input id="faqQuestion" maxlength="255" placeholder="질문 입력">
+            </div>
+
+            <div class="field">
+                <label for="faqAnswer">답변</label>
+                <textarea id="faqAnswer" placeholder="답변 입력"></textarea>
+            </div>
+        </div>
+        <div id="faqModalError" class="modal-error"></div>
+        <div class="modal-actions">
+            <button class="btn-line" type="button" onclick="closeFaqModal()">취소</button>
+            <button class="btn-main" type="button" onclick="saveFaq()">저장</button>
+        </div>
+    </div>
+</div>
+
 <div class="wrapper">
     <header>
         <div class="logo">
@@ -408,606 +710,307 @@
     </header>
 
     <div class="page-title">
-        <h1>문의 <em>관리</em><br>한눈에 확인하세요</h1>
-        <p>접수된 모든 문의를 유형별·상태별로 관리하고 답변합니다.</p>
+        <h1>관리자 <em>통합 운영</em><br>한곳에서 관리하세요</h1>
+        <p>공지사항, FAQ, 문의 답변을 하나의 관리자 페이지에서 관리합니다.</p>
     </div>
 
-    <div class="summary-grid">
-        <div class="s-card">
-            <div class="sl">전체 문의</div>
-            <div class="sn" id="cntAll">0</div>
-            <div class="ss">누적 접수</div>
-        </div>
-        <div class="s-card">
-            <div class="sl">⏳ 미처리</div>
-            <div class="sn" id="cntP">0</div>
-            <div class="ss">확인 필요</div>
-        </div>
-        <div class="s-card">
-            <div class="sl">🔄 처리중</div>
-            <div class="sn" id="cntR">0</div>
-            <div class="ss">검토 진행</div>
-        </div>
-        <div class="s-card">
-            <div class="sl">✅ 처리완료</div>
-            <div class="sn" id="cntD">0</div>
-            <div class="ss">완료</div>
-        </div>
+    <div class="tab-nav">
+        <button class="tab-btn active" data-tab="inquiry">문의 관리</button>
+        <button class="tab-btn" data-tab="notice">공지사항 관리</button>
+        <button class="tab-btn" data-tab="faq">FAQ 관리</button>
     </div>
 
-    <div class="admin-grid">
-        <div>
-            <div class="panel filter-panel">
-                <div class="panel-header">
-                    <div class="panel-icon">🗂</div>
-                    <h2>유형별 필터</h2>
-                </div>
-                <div class="panel-body">
-                    <div class="fi active" data-f="전체" onclick="applyF(this)">전체 <span class="fc" id="fc-전체">0</span></div>
-                    <div class="fi" data-f="오류 신고" onclick="applyF(this)">🐛 오류 신고 <span class="fc" id="fc-오류 신고">0</span></div>
-                    <div class="fi" data-f="기능 문의" onclick="applyF(this)">⚙️ 기능 문의 <span class="fc" id="fc-기능 문의">0</span></div>
-                    <div class="fi" data-f="계정 문의" onclick="applyF(this)">👤 계정 문의 <span class="fc" id="fc-계정 문의">0</span></div>
-                    <div class="fi" data-f="결제 문의" onclick="applyF(this)">💳 결제 문의 <span class="fc" id="fc-결제 문의">0</span></div>
-                    <div class="fi" data-f="요청 문의" onclick="applyF(this)">🤔 요청 문의 <span class="fc" id="fc-요청 문의">0</span></div>
-                    <div class="fi" data-f="기타 문의" onclick="applyF(this)">📋 기타 문의 <span class="fc" id="fc-기타 문의">0</span></div>
-                </div>
+    <div id="sectionInquiry" class="section active">
+        <div class="summary-grid">
+            <div class="s-card">
+                <div class="sl">전체 문의</div>
+                <div class="sn" id="cntAll">0</div>
+                <div class="ss">누적 접수</div>
+            </div>
+            <div class="s-card">
+                <div class="sl">⏳ 미처리</div>
+                <div class="sn" id="cntP">0</div>
+                <div class="ss">확인 필요</div>
+            </div>
+            <div class="s-card">
+                <div class="sl">🔄 처리중</div>
+                <div class="sn" id="cntR">0</div>
+                <div class="ss">검토 진행</div>
+            </div>
+            <div class="s-card">
+                <div class="sl">✅ 처리완료</div>
+                <div class="sn" id="cntD">0</div>
+                <div class="ss">완료</div>
             </div>
         </div>
 
-        <div>
-            <div class="panel">
-                <div class="panel-header" style="justify-content:space-between;flex-wrap:wrap;gap:10px;">
-                    <div style="display:flex;align-items:center;gap:10px;">
-                        <div class="panel-icon">📋</div>
-                        <h2 id="listTitle">전체 문의</h2>
+        <div class="admin-grid">
+            <div>
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-icon">🗂</div>
+                        <h2>유형별 필터</h2>
                     </div>
-                    <div class="stab-bar">
-                        <button class="stab active" onclick="applyS('all',this)">전체</button>
-                        <button class="stab" onclick="applyS('미처리',this)">⏳ 미처리</button>
-                        <button class="stab" onclick="applyS('처리중',this)">🔄 처리중</button>
-                        <button class="stab" onclick="applyS('처리완료',this)">✅ 완료</button>
+                    <div class="panel-body">
+                        <div class="fi active" data-f="전체" onclick="applyF(this)">전체 <span class="fc" id="fc-전체">0</span></div>
+                        <div class="fi" data-f="가입·연동" onclick="applyF(this)">가입·연동 <span class="fc" id="fc-가입·연동">0</span></div>
+                        <div class="fi" data-f="콘텐츠 생성" onclick="applyF(this)">콘텐츠 생성 <span class="fc" id="fc-콘텐츠 생성">0</span></div>
+                        <div class="fi" data-f="시스템오류" onclick="applyF(this)">시스템오류 <span class="fc" id="fc-시스템오류">0</span></div>
+                        <div class="fi" data-f="계정" onclick="applyF(this)">계정 <span class="fc" id="fc-계정">0</span></div>
+                        <div class="fi" data-f="기타" onclick="applyF(this)">기타 <span class="fc" id="fc-기타">0</span></div>
                     </div>
                 </div>
+            </div>
 
-                <div class="panel-body">
-                    <div class="search-row">
-                        <input type="text" id="searchInput" class="search-input" placeholder="제목, 이메일, 내용, 문의유형으로 검색" oninput="handleSearch(this.value)">
-                        <select id="sortSelect" class="sort-select" onchange="changeSort(this.value)">
-                            <option value="latest">최신순</option>
-                            <option value="oldest">오래된순</option>
-                            <option value="pending">미처리 우선</option>
-                        </select>
-                        <button type="button" class="btn-sm" onclick="clearSearch()">초기화</button>
+            <div>
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-header-left">
+                            <div class="panel-icon">📨</div>
+                            <h2 id="listTitle">전체 문의</h2>
+                        </div>
                     </div>
+                    <div class="panel-body">
+                        <div class="search-row">
+                            <input id="searchInput" class="search-input" placeholder="제목, 이메일, 내용, 유형 검색" oninput="handleSearch(this.value)">
+                            <select class="sel" onchange="changeSort(this.value)">
+                                <option value="latest">최신순</option>
+                                <option value="oldest">오래된순</option>
+                                <option value="pending">미처리 우선</option>
+                            </select>
+                        </div>
 
-                    <div class="search-info" id="searchInfo">전체 문의를 표시 중입니다.</div>
-                    <div class="inq-list" id="inqList" style="margin-top:16px;"></div>
+                        <div class="status-tabs">
+                            <button class="stab active" onclick="applyS('전체', this)">전체</button>
+                            <button class="stab" onclick="applyS('미처리', this)">미처리</button>
+                            <button class="stab" onclick="applyS('처리중', this)">처리중</button>
+                            <button class="stab" onclick="applyS('처리완료', this)">처리완료</button>
+                        </div>
+
+                        <div id="inquiryList"></div>
+                    </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="sectionNotice" class="section">
+        <div class="panel" style="margin-top:18px;">
+            <div class="panel-header">
+                <div class="panel-header-left">
+                    <div class="panel-icon">📢</div>
+                    <h2>공지사항 관리</h2>
+                </div>
+                <button class="btn-add" onclick="openNoticeModal()">+ 공지 추가</button>
+            </div>
+            <div class="panel-body">
+                <div class="search-row">
+                    <input id="noticeKeyword" class="search-input" placeholder="공지 제목 / 내용 검색" oninput="renderNotices()">
+                </div>
+                <div id="noticeList"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="sectionFaq" class="section">
+        <div class="panel" style="margin-top:18px;">
+            <div class="panel-header">
+                <div class="panel-header-left">
+                    <div class="panel-icon">❓</div>
+                    <h2>FAQ 관리</h2>
+                </div>
+                <button class="btn-add" onclick="openFaqModal()">+ FAQ 추가</button>
+            </div>
+            <div class="panel-body">
+                <div class="search-row">
+                    <input id="faqKeyword" class="search-input" placeholder="카테고리 / 질문 / 답변 검색" oninput="renderFaqs()">
+                </div>
+                <div id="faqAdminList"></div>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    var inquiries = [];
-    var curFilter = '전체';
-    var curStatus = 'all';
-    var curKeyword = '';
-    var curSort = 'latest';
+    let inquiries = [];
+    let notices = [];
+    let faqs = [];
 
-    var SC = { 미처리:'sb-p', 처리중:'sb-r', 처리완료:'sb-d' };
-    var SL = { 미처리:'⏳ 미처리', 처리중:'🔄 처리중', 처리완료:'✅ 처리완료' };
+    let curFilter = '전체';
+    let curStatus = '전체';
+    let curKeyword = '';
+    let curSort = 'latest';
 
-    function api(url, options = {}) {
-        options.headers = options.headers || {};
-        const token = localStorage.getItem("adminToken");
-        if (token) options.headers["Authorization"] = token;
-        return fetch(url, options);
+    const SC = {
+        '미처리':'sb-p',
+        '처리중':'sb-r',
+        '처리완료':'sb-d'
+    };
+
+    const SL = {
+        '미처리':'⏳ 미처리',
+        '처리중':'🔄 처리중',
+        '처리완료':'✅ 처리완료'
+    };
+
+    function esc(s) {
+        return String(s || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/\n/g, '<br>');
+    }
+
+    function jsEsc(s) {
+        return String(s || '')
+            .replace(/\\/g, '\\\\')
+            .replace(/'/g, "\\'")
+            .replace(/\n/g, "\\n")
+            .replace(/\r/g, "");
     }
 
     function formatDate(dateString) {
-        if (!dateString) return '날짜 없음';
-        return new Date(dateString).toLocaleString('ko-KR', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit'
+        if (!dateString) return '-';
+        const d = new Date(dateString);
+        if (Number.isNaN(d.getTime())) return String(dateString);
+        return d.toLocaleString('ko-KR', {
+            year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit'
         });
     }
 
     function parseAttachmentNames(text) {
-        if (!text || !text.trim()) return [];
-        return text.split(',').map(function(name) {
-            return name.trim();
-        }).filter(function(name) {
-            return name.length > 0;
+        if (!text || !String(text).trim()) return [];
+        return String(text).split(',').map(v => v.trim()).filter(Boolean);
+    }
+
+    function getAdminToken() {
+        return localStorage.getItem('adminToken') || '';
+    }
+
+    async function fetchWithAdmin(url, options = {}) {
+        const token = getAdminToken();
+
+        const headers = Object.assign({}, options.headers || {}, {
+            'admin-token': token,
+            'Authorization': token ? `Bearer ${token}` : ''
         });
+
+        const response = await fetch(url, Object.assign({}, options, { headers }));
+        const raw = await response.text();
+
+        let data = raw;
+        try {
+            data = raw ? JSON.parse(raw) : null;
+        } catch (_) {
+            data = raw;
+        }
+
+        if (!response.ok) {
+            const bodyText = typeof data === 'string' ? data : JSON.stringify(data);
+            throw new Error(`status=${response.status}\nbody=${bodyText}`);
+        }
+
+        return data;
     }
 
-    function downloadAttachment(inquiryId, index) {
-        api("/api/admin/inquiries/" + inquiryId + "/attachments/" + index)
-            .then(function(res) {
-                if (res.status === 401) {
-                    showLogin();
-                    throw new Error("인증 필요");
-                }
-                if (!res.ok) throw new Error("다운로드 실패");
+    function switchTab(tab) {
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.tab === tab);
+        });
+        document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
 
-                var disposition = res.headers.get("Content-Disposition") || "";
-                var fileName = "download";
-
-                var matchUtf8 = disposition.match(/filename\*=UTF-8''([^;]+)/i);
-                var matchBasic = disposition.match(/filename="?([^"]+)"?/i);
-
-                if (matchUtf8 && matchUtf8[1]) {
-                    fileName = decodeURIComponent(matchUtf8[1]);
-                } else if (matchBasic && matchBasic[1]) {
-                    fileName = matchBasic[1];
-                }
-
-                return res.blob().then(function(blob) {
-                    return { blob: blob, fileName: fileName };
-                });
-            })
-            .then(function(data) {
-                var url = window.URL.createObjectURL(data.blob);
-                var a = document.createElement("a");
-                a.href = url;
-                a.download = data.fileName;
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-                window.URL.revokeObjectURL(url);
-            })
-            .catch(function(err) {
-                console.error(err);
-                if (err.message !== "인증 필요") {
-                    alert("첨부파일 다운로드 실패");
-                }
-            });
+        if (tab === 'inquiry') document.getElementById('sectionInquiry').classList.add('active');
+        if (tab === 'notice') document.getElementById('sectionNotice').classList.add('active');
+        if (tab === 'faq') document.getElementById('sectionFaq').classList.add('active');
     }
 
-    function loadInquiries(openId) {
-        api("/api/admin/inquiries")
-            .then(function(res) {
-                if (res.status === 401) {
-                    showLogin();
-                    throw new Error("인증 필요");
-                }
-                if (!res.ok) throw new Error("문의 목록 조회 실패");
-                return res.json();
-            })
-            .then(function(data) {
-                inquiries = data.map(function(i) {
-                    return {
-                        id: i.id,
-                        type: i.type,
-                        email: i.email,
-                        title: i.title,
-                        body: i.body,
-                        status: i.status || '미처리',
-                        date: formatDate(i.createdAt),
-                        rawDate: i.createdAt,
-                        attachmentNames: parseAttachmentNames(i.attachmentNames),
-                        replies: [],
-                        detailOpen: openId ? i.id === openId : false
-                    };
-                });
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            switchTab(this.dataset.tab);
+        });
+    });
 
-                if (openId) {
-                    var target = inquiries.find(function(i) { return i.id === openId; });
-                    if (target) {
-                        fetchReplies(openId);
-                        return;
-                    }
-                }
+    async function adminLogin() {
+        const id = document.getElementById('adminId').value.trim();
+        const pw = document.getElementById('adminPw').value.trim();
+        const loginErr = document.getElementById('loginErr');
 
-                renderAdmin();
-            })
-            .catch(function(err) {
-                console.error(err);
+        loginErr.style.display = 'none';
+        loginErr.textContent = '';
+
+        try {
+            const res = await fetch('/api/admin/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, pw })
             });
+
+            const raw = await res.text();
+            let data;
+            try {
+                data = raw ? JSON.parse(raw) : {};
+            } catch (_) {
+                data = raw;
+            }
+
+            if (!res.ok) {
+                throw new Error(`status=${res.status}\nbody=${typeof data === 'string' ? data : JSON.stringify(data)}`);
+            }
+
+            const token =
+                (data && data.token) ||
+                (data && data.adminToken) ||
+                (data && data.accessToken) ||
+                '';
+
+            if (!token) {
+                throw new Error('로그인 응답에 token 값이 없음');
+            }
+
+            localStorage.setItem('adminToken', token);
+            hideLogin();
+            await bootstrapAdmin();
+        } catch (err) {
+            console.error(err);
+            loginErr.textContent = '로그인 실패\n' + err.message;
+            loginErr.style.display = 'block';
+        }
     }
 
-    function fetchReplies(id) {
-        api("/api/admin/replies/" + id)
-            .then(function(res) {
-                if (res.status === 401) {
-                    showLogin();
-                    throw new Error("인증 필요");
-                }
-                if (!res.ok) throw new Error("답변 조회 실패");
-                return res.json();
-            })
-            .then(function(data) {
-                var inquiry = inquiries.find(function(i) { return i.id === id; });
-                if (inquiry) {
-                    inquiry.replies = data;
-                    inquiry.detailOpen = true;
-                }
-                renderAdmin();
-            })
-            .catch(function(err) {
-                console.error(err);
-                renderAdmin();
-            });
+    function showLogin() {
+        document.getElementById('loginWrap').style.display = 'flex';
+    }
+
+    function hideLogin() {
+        document.getElementById('loginWrap').style.display = 'none';
+        document.getElementById('loginErr').style.display = 'none';
+    }
+
+    function logout() {
+        localStorage.removeItem('adminToken');
+        inquiries = [];
+        notices = [];
+        faqs = [];
+        document.getElementById('adminPw').value = '';
+        showLogin();
     }
 
     function updateCounts() {
         document.getElementById('cntAll').textContent = inquiries.length;
-        document.getElementById('cntP').textContent = inquiries.filter(function(i){ return i.status === '미처리'; }).length;
-        document.getElementById('cntR').textContent = inquiries.filter(function(i){ return i.status === '처리중'; }).length;
-        document.getElementById('cntD').textContent = inquiries.filter(function(i){ return i.status === '처리완료'; }).length;
+        document.getElementById('cntP').textContent = inquiries.filter(i => i.status === '미처리').length;
+        document.getElementById('cntR').textContent = inquiries.filter(i => i.status === '처리중').length;
+        document.getElementById('cntD').textContent = inquiries.filter(i => i.status === '처리완료').length;
 
-        var types = ['오류 신고', '기능 문의', '계정 문의', '결제 문의', '요청 문의', '기타 문의'];
-        types.forEach(function(t) {
-            var el = document.getElementById('fc-' + t);
-            if (el) el.textContent = inquiries.filter(function(i){ return i.type === t; }).length;
+        const types = ['가입·연동', '콘텐츠 생성', '시스템오류', '계정', '기타'];
+        types.forEach(t => {
+            const el = document.getElementById('fc-' + t);
+            if (el) el.textContent = inquiries.filter(i => i.type === t).length;
         });
-
         document.getElementById('fc-전체').textContent = inquiries.length;
     }
 
-    function matchesKeyword(inq, keyword) {
-        if (!keyword) return true;
-        var q = keyword.toLowerCase();
-        return (
-            String(inq.title || '').toLowerCase().includes(q) ||
-            String(inq.email || '').toLowerCase().includes(q) ||
-            String(inq.body || '').toLowerCase().includes(q) ||
-            String(inq.type || '').toLowerCase().includes(q)
-        );
-    }
-
-    function sortList(list) {
-        list.sort(function(a, b) {
-            if (curSort === 'latest') return new Date(b.rawDate) - new Date(a.rawDate);
-            if (curSort === 'oldest') return new Date(a.rawDate) - new Date(b.rawDate);
-            if (curSort === 'pending') {
-                if (a.status === '미처리' && b.status !== '미처리') return -1;
-                if (a.status !== '미처리' && b.status === '미처리') return 1;
-                return new Date(b.rawDate) - new Date(a.rawDate);
-            }
-            return 0;
-        });
-    }
-
-    function updateSearchInfo(filteredCount) {
-        var info = document.getElementById('searchInfo');
-        if (!info) return;
-
-        var parts = [];
-        if (curFilter !== '전체') parts.push('유형: ' + curFilter);
-        if (curStatus !== 'all') parts.push('상태: ' + curStatus);
-        if (curKeyword.trim()) parts.push('검색어: ' + curKeyword.trim());
-        if (curSort === 'latest') parts.push('정렬: 최신순');
-        if (curSort === 'oldest') parts.push('정렬: 오래된순');
-        if (curSort === 'pending') parts.push('정렬: 미처리 우선');
-
-        if (parts.length === 0) {
-            info.textContent = '전체 문의를 표시 중입니다.';
-            return;
-        }
-
-        info.textContent = parts.join(' / ') + ' / 결과 ' + filteredCount + '건';
-    }
-
-    function renderAdmin() {
-        updateCounts();
-
-        var list = inquiries.slice();
-
-        if (curFilter !== '전체') list = list.filter(function(i){ return i.type === curFilter; });
-        if (curStatus !== 'all') list = list.filter(function(i){ return i.status === curStatus; });
-        list = list.filter(function(i) { return matchesKeyword(i, curKeyword); });
-
-        sortList(list);
-        updateSearchInfo(list.length);
-
-        var container = document.getElementById('inqList');
-
-        if (!list.length) {
-            container.innerHTML = `
-                <div class="empty-list">
-                    <div class="el-icon">📭</div>
-                    <p>해당 조건의 문의가 없습니다.</p>
-                </div>
-            `;
-            return;
-        }
-
-        container.innerHTML = list.map(function(inq) {
-            var repliesHtml = '';
-            if (inq.replies && inq.replies.length) {
-                repliesHtml = `
-                    <div class="reply-list">
-                        ${inq.replies.map(function(r) {
-                    return `
-                                <div class="reply-item">
-                                    <div class="reply-top">
-                                        <div class="reply-meta">관리자 답변 · ${formatDate(r.createdAt)}</div>
-                                        <div class="reply-actions">
-                                            <button type="button" class="reply-edit-btn" onclick="event.stopPropagation(); editReply(${inq.id}, ${r.id}, '${jsEsc(r.content)}')">수정</button>
-                                            <button type="button" class="reply-delete-btn" onclick="event.stopPropagation(); deleteReply(${inq.id}, ${r.id})">삭제</button>
-                                        </div>
-                                    </div>
-                                    ${esc(r.content)}
-                                </div>
-                            `;
-                }).join('')}
-                    </div>
-                `;
-            }
-
-            var attachmentsHtml = '';
-            if (inq.attachmentNames && inq.attachmentNames.length) {
-                attachmentsHtml = `
-                    <div class="attachment-box">
-                        <div class="reply-meta" style="margin-bottom:8px;">첨부파일</div>
-                        <div style="display:flex;flex-direction:column;gap:6px;">
-                            ${inq.attachmentNames.map(function(name, index) {
-                    return `
-                                    <a class="attachment-link reply-item" href="javascript:void(0)" onclick="event.stopPropagation(); downloadAttachment(${inq.id}, ${index})">
-                                        📎 ${esc(name)}
-                                    </a>
-                                `;
-                }).join('')}
-                        </div>
-                    </div>
-                `;
-            }
-
-            return `
-                <div class="inq-card ${inq.detailOpen ? 'expanded' : ''}">
-                    <div class="ir1" onclick="toggleDetail(${inq.id})">
-                        <span class="i-type">${inq.type}</span>
-                        <span class="i-title">${esc(inq.title)}</span>
-                        <span class="sb ${SC[inq.status] || 'sb-p'}">${SL[inq.status] || '⏳ 미처리'}</span>
-                    </div>
-
-                    <div class="ir2" onclick="toggleDetail(${inq.id})">
-                        <span class="i-meta">#${inq.id}</span>
-                        <span class="i-dot"></span>
-                        <span class="i-meta">${esc(inq.email)}</span>
-                        <span class="i-dot"></span>
-                        <span class="i-meta">🕒 ${inq.date}</span>
-                    </div>
-
-                    <div class="inq-detail ${inq.detailOpen ? 'show' : ''}">
-                        <div class="body-text">${esc(inq.body)}</div>
-
-                        ${attachmentsHtml}
-
-                        <div class="d-actions">
-                            <span class="sc-lbl">상태 변경 :</span>
-                            <select class="sts-sel" onchange="changeStatus(${inq.id}, this.value)" onclick="event.stopPropagation()">
-                                <option value="미처리" ${inq.status === '미처리' ? 'selected' : ''}>⏳ 미처리</option>
-                                <option value="처리중" ${inq.status === '처리중' ? 'selected' : ''}>🔄 처리중</option>
-                                <option value="처리완료" ${inq.status === '처리완료' ? 'selected' : ''}>✅ 처리완료</option>
-                            </select>
-                        </div>
-
-                        ${repliesHtml}
-
-                        <textarea class="reply-ta" id="reply-${inq.id}" placeholder="답변을 작성하세요..." onclick="event.stopPropagation()"></textarea>
-                        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px;">
-                            <button type="button" class="btn-sm" onclick="event.stopPropagation(); deleteInquiry(${inq.id})">삭제</button>
-                            <button type="button" class="btn-sm btn-accent" onclick="event.stopPropagation(); saveReply(${inq.id})">답변 등록</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }).join('');
-    }
-
-    function toggleDetail(id) {
-        var inquiry = inquiries.find(function(i){ return i.id === id; });
-        if (!inquiry) return;
-
-        if (inquiry.detailOpen) {
-            inquiry.detailOpen = false;
-            renderAdmin();
-            return;
-        }
-
-        inquiries.forEach(function(i) { i.detailOpen = false; });
-
-        inquiry.detailOpen = true;
-        fetchReplies(id);
-    }
-
-    function saveReply(id) {
-        var textarea = document.getElementById('reply-' + id);
-        var content = textarea.value.trim();
-
-        if (!content) {
-            alert("답변을 입력하세요");
-            return;
-        }
-
-        api("/api/admin/replies/" + id, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ content: content })
-        })
-            .then(function(res) {
-                if (res.status === 401) {
-                    showLogin();
-                    throw new Error("인증 필요");
-                }
-                if (!res.ok) throw new Error("답변 저장 실패");
-                return res.json();
-            })
-            .then(function() {
-                return api("/api/admin/inquiries/" + id + "/status", {
-                    method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ status: "처리중" })
-                });
-            })
-            .then(function(res) {
-                if (res.status === 401) {
-                    showLogin();
-                    throw new Error("인증 필요");
-                }
-                if (!res.ok) throw new Error("상태 변경 실패");
-                return res.json();
-            })
-            .then(function() {
-                document.getElementById('reply-' + id).value = "";
-                loadInquiries(id);
-            })
-            .catch(function(err) {
-                console.error(err);
-                if (err.message !== "인증 필요") alert("답변 저장 또는 상태 변경 실패");
-            });
-    }
-
-    function editReply(inquiryId, replyId, content) {
-        var textarea = document.getElementById('reply-' + inquiryId);
-        textarea.value = content;
-        textarea.focus();
-
-        var btnArea = textarea.nextElementSibling;
-        btnArea.innerHTML = `
-            <button type="button" class="btn-sm" onclick="event.stopPropagation(); deleteInquiry(${inquiryId})">삭제</button>
-            <button type="button" class="btn-sm" onclick="event.stopPropagation(); cancelEdit(${inquiryId})">취소</button>
-            <button type="button" class="btn-sm btn-accent" onclick="event.stopPropagation(); updateReply(${inquiryId}, ${replyId})">수정 저장</button>
-        `;
-    }
-
-    function updateReply(inquiryId, replyId) {
-        var textarea = document.getElementById('reply-' + inquiryId);
-        var content = textarea.value.trim();
-
-        if (!content) {
-            alert("답변을 입력하세요");
-            return;
-        }
-
-        api("/api/admin/replies/edit/" + replyId, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ content: content })
-        })
-            .then(function(res) {
-                if (res.status === 401) {
-                    showLogin();
-                    throw new Error("인증 필요");
-                }
-                if (!res.ok) throw new Error("답변 수정 실패");
-                return res.json();
-            })
-            .then(function() {
-                textarea.value = "";
-                loadInquiries(inquiryId);
-            })
-            .catch(function(err) {
-                console.error(err);
-                if (err.message !== "인증 필요") alert("답변 수정 실패");
-            });
-    }
-
-    function cancelEdit(inquiryId) {
-        document.getElementById('reply-' + inquiryId).value = "";
-        loadInquiries(inquiryId);
-    }
-
-    function deleteReply(inquiryId, replyId) {
-        if (!confirm("이 답변을 삭제할까요?")) return;
-
-        api("/api/admin/replies/" + replyId, {
-            method: "DELETE"
-        })
-            .then(function(res) {
-                if (res.status === 401) {
-                    showLogin();
-                    throw new Error("인증 필요");
-                }
-                if (!res.ok) throw new Error("답변 삭제 실패");
-                return res.json();
-            })
-            .then(function() {
-                loadInquiries(inquiryId);
-            })
-            .catch(function(err) {
-                console.error(err);
-                if (err.message !== "인증 필요") alert("답변 삭제 실패");
-            });
-    }
-
-    function changeStatus(id, value) {
-        api("/api/admin/inquiries/" + id + "/status", {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ status: value })
-        })
-            .then(function(res) {
-                if (res.status === 401) {
-                    showLogin();
-                    throw new Error("인증 필요");
-                }
-                if (!res.ok) throw new Error("상태 변경 실패");
-                return res.json();
-            })
-            .then(function() {
-                loadInquiries(id);
-            })
-            .catch(function(err) {
-                console.error(err);
-                if (err.message !== "인증 필요") alert("상태 변경 실패");
-            });
-    }
-
-    function deleteInquiry(id) {
-        if (!confirm("이 문의를 삭제할까요?")) return;
-
-        api("/api/admin/inquiries/" + id, {
-            method: "DELETE"
-        })
-            .then(function(res) {
-                if (res.status === 401) {
-                    showLogin();
-                    throw new Error("인증 필요");
-                }
-                if (!res.ok) throw new Error("삭제 실패");
-                return res.json();
-            })
-            .then(function() {
-                alert("문의가 삭제되었습니다.");
-                loadInquiries();
-            })
-            .catch(function(err) {
-                console.error(err);
-                if (err.message !== "인증 필요") alert("삭제 실패");
-            });
-    }
-
-    function applyF(el) {
-        document.querySelectorAll('.fi').forEach(function(i) { i.classList.remove('active'); });
-        el.classList.add('active');
-        curFilter = el.dataset.f;
-        document.getElementById('listTitle').textContent = (curFilter === '전체' ? '전체 문의' : curFilter);
-        renderAdmin();
-    }
-
-    function applyS(status, el) {
-        document.querySelectorAll('.stab').forEach(function(b) { b.classList.remove('active'); });
-        el.classList.add('active');
-        curStatus = status;
-        renderAdmin();
-    }
-
     function handleSearch(value) {
-        curKeyword = value || '';
-        renderAdmin();
-    }
-
-    function clearSearch() {
-        curKeyword = '';
-        var input = document.getElementById('searchInput');
-        if (input) input.value = '';
+        curKeyword = (value || '').toLowerCase();
         renderAdmin();
     }
 
@@ -1016,73 +1019,680 @@
         renderAdmin();
     }
 
-    function adminLogin() {
-        const id = document.getElementById("adminId").value;
-        const pw = document.getElementById("adminPw").value;
+    function applyF(el) {
+        document.querySelectorAll('.fi').forEach(i => i.classList.remove('active'));
+        el.classList.add('active');
+        curFilter = el.dataset.f;
+        document.getElementById('listTitle').textContent = curFilter === '전체' ? '전체 문의' : curFilter;
+        renderAdmin();
+    }
 
-        fetch("/api/admin/login", {
-            method:"POST",
-            headers:{"Content-Type":"application/json"},
-            body:JSON.stringify({ id:id, pw:pw })
-        })
-            .then(function(res){
-                if(!res.ok) throw new Error("로그인 실패");
-                return res.json();
-            })
-            .then(function(data){
-                localStorage.setItem("adminToken", data.token);
-                hideLogin();
-                loadInquiries();
-            })
-            .catch(function(){
-                document.getElementById("loginErr").style.display="block";
+    function applyS(status, el) {
+        document.querySelectorAll('.stab').forEach(b => b.classList.remove('active'));
+        el.classList.add('active');
+        curStatus = status;
+        renderAdmin();
+    }
+
+    function matchesKeyword(inq, keyword) {
+        if (!keyword) return true;
+        return [
+            inq.title || '',
+            inq.email || '',
+            inq.body || '',
+            inq.type || ''
+        ].join(' ').toLowerCase().includes(keyword);
+    }
+
+    function renderReplies(inq) {
+        if (!inq.replies || !inq.replies.length) {
+            return `
+              <div class="reply-box">
+                <div class="reply-meta">등록된 답변</div>
+                <div class="reply-empty">등록된 답변이 없습니다.</div>
+              </div>
+            `;
+        }
+
+        return `
+          <div class="reply-box">
+            <div class="reply-meta">등록된 답변</div>
+            ${inq.replies.map(r => `
+              <div class="reply-card">
+                <div id="reply-view-${r.id}" class="reply-view-text">${esc(r.content)}</div>
+
+                <div id="reply-edit-wrap-${r.id}" style="display:none;">
+                  <textarea
+                    id="reply-edit-${r.id}"
+                    class="reply-edit-ta"
+                  >${r.content || ''}</textarea>
+
+                  <div class="reply-inline-actions">
+                    <button
+                      type="button"
+                      class="btn-line"
+                      onclick="event.stopPropagation(); cancelReplyEdit(${r.id})">
+                      취소
+                    </button>
+                    <button
+                      type="button"
+                      class="btn-main"
+                      onclick="event.stopPropagation(); saveReplyEdit(${inq.id}, ${r.id})">
+                      수정 저장
+                    </button>
+                  </div>
+                </div>
+
+                <div id="reply-action-${r.id}" class="reply-inline-actions">
+                  <button
+                    type="button"
+                    class="btn-line"
+                    onclick="event.stopPropagation(); startReplyEdit(${r.id})">
+                    답변 수정
+                  </button>
+                  <button
+                    type="button"
+                    class="btn-danger"
+                    onclick="event.stopPropagation(); deleteReply(${inq.id}, ${r.id})">
+                    답변 삭제
+                  </button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+    }
+
+    function renderFiles(inq) {
+        if (!inq.attachmentNames || !inq.attachmentNames.length) return '';
+
+        return `
+          <div class="attachment-box">
+            <div class="attachment-title">첨부파일</div>
+            ${inq.attachmentNames.map((name, index) => `
+              <a class="attachment-link" href="/api/admin/inquiries/${inq.id}/attachments/${index}">
+                <span>📎</span>
+                <span>${esc(name)}</span>
+              </a>
+            `).join('')}
+          </div>
+        `;
+    }
+
+    function renderAdmin() {
+        let list = inquiries.filter(inq => {
+            const typeMatch = curFilter === '전체' || inq.type === curFilter;
+            const statusMatch = curStatus === '전체' || inq.status === curStatus;
+            const keywordMatch = matchesKeyword(inq, curKeyword);
+            return typeMatch && statusMatch && keywordMatch;
+        });
+
+        list.sort((a, b) => {
+            const ad = a.rawDate ? new Date(a.rawDate).getTime() : 0;
+            const bd = b.rawDate ? new Date(b.rawDate).getTime() : 0;
+
+            if (curSort === 'oldest') return ad - bd;
+            if (curSort === 'pending') {
+                if (a.status === '미처리' && b.status !== '미처리') return -1;
+                if (a.status !== '미처리' && b.status === '미처리') return 1;
+            }
+            return bd - ad;
+        });
+
+        const html = list.length ? list.map(inq => `
+          <div class="accordion-card" data-inquiry-id="${inq.id}">
+            <div class="accordion-header" onclick="toggleInquiry(${inq.id}, this)">
+              <span class="i-type">${esc(inq.type)}</span>
+              <span class="accordion-title">${esc(inq.title)}</span>
+              <span class="sb ${SC[inq.status] || 'sb-p'}">${SL[inq.status] || '⏳ 미처리'}</span>
+              <div class="accordion-arrow">⌄</div>
+            </div>
+
+            <div class="accordion-body">
+              <div class="body-text">${esc(inq.body)}</div>
+
+              ${renderFiles(inq)}
+
+              <div class="detail-meta">
+                ${esc(inq.email)} · ${esc(inq.date)}
+              </div>
+
+              ${renderReplies(inq)}
+
+              <div class="new-reply-box">
+                <div class="new-reply-title">새 답변 등록</div>
+                <textarea class="reply-ta" id="reply-${inq.id}" placeholder="답변을 작성하세요."></textarea>
+
+                <div class="accordion-actions">
+                  <select class="sel" style="min-width:150px;" onchange="changeStatus(${inq.id}, this.value)">
+                    <option value="미처리" ${inq.status === '미처리' ? 'selected' : ''}>⏳ 미처리</option>
+                    <option value="처리중" ${inq.status === '처리중' ? 'selected' : ''}>🔄 처리중</option>
+                    <option value="처리완료" ${inq.status === '처리완료' ? 'selected' : ''}>✅ 처리완료</option>
+                  </select>
+
+                  <button type="button" class="btn-danger" onclick="event.stopPropagation(); deleteInquiry(${inq.id})">삭제</button>
+                  <button type="button" class="btn-main" onclick="event.stopPropagation(); saveReply(${inq.id})">답변 등록</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        `).join('') : `
+          <div class="empty-list">
+            <div class="el-icon">📭</div>
+            <p>조건에 맞는 문의가 없습니다.</p>
+          </div>
+        `;
+
+        document.getElementById('inquiryList').innerHTML = html;
+    }
+
+    async function loadInquiries() {
+        try {
+            const data = await fetchWithAdmin('/api/admin/inquiries');
+
+            inquiries = (data || []).map(i => ({
+                id: i.id,
+                type: i.type,
+                email: i.email,
+                title: i.title,
+                body: i.body,
+                status: i.status || '미처리',
+                date: formatDate(i.createdAt),
+                rawDate: i.createdAt,
+                attachmentNames: parseAttachmentNames(i.attachmentNames),
+                replies: []
+            }));
+
+            updateCounts();
+            renderAdmin();
+        } catch (err) {
+            console.error('문의 목록 조회 실패:', err);
+            document.getElementById('inquiryList').innerHTML = `
+              <div class="empty-list">
+                <div class="el-icon">⚠️</div>
+                <p>문의 목록을 불러오지 못했습니다.\n${esc(err.message)}</p>
+              </div>
+            `;
+        }
+    }
+
+    async function fetchReplies(id) {
+        try {
+            const data = await fetchWithAdmin('/api/admin/replies/' + id);
+            const inquiry = inquiries.find(i => i.id === id);
+            if (inquiry) {
+                inquiry.replies = Array.isArray(data) ? data : [];
+            }
+            renderAdmin();
+            reopenInquiryAccordion(id);
+        } catch (err) {
+            console.error('답변 조회 실패:', err);
+        }
+    }
+
+    function reopenInquiryAccordion(id) {
+        const card = document.querySelector(`[data-inquiry-id="${id}"]`);
+        if (card) {
+            card.classList.add('open');
+        }
+    }
+
+    function toggleInquiry(id, element) {
+        const card = element.closest('.accordion-card');
+        const parent = card.parentElement;
+        const willOpen = !card.classList.contains('open');
+
+        parent.querySelectorAll('.accordion-card').forEach(item => {
+            item.classList.remove('open');
+        });
+
+        if (willOpen) {
+            card.classList.add('open');
+            fetchReplies(id);
+        }
+    }
+
+    async function saveReply(id) {
+        const textarea = document.getElementById('reply-' + id);
+        const content = textarea.value.trim();
+
+        if (!content) {
+            alert('답변을 입력하세요');
+            return;
+        }
+
+        try {
+            await fetchWithAdmin('/api/admin/replies/' + id, {
+                method:'POST',
+                headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({ content })
             });
+
+            await fetchWithAdmin('/api/admin/inquiries/' + id + '/status', {
+                method:'PATCH',
+                headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({ status:'처리중' })
+            });
+
+            await loadInquiries();
+            await fetchReplies(id);
+        } catch (err) {
+            console.error(err);
+            alert('답변 저장 또는 상태 변경 실패\n' + err.message);
+        }
     }
 
-    function showLogin() {
-        document.getElementById("loginWrap").style.display = "flex";
+    function startReplyEdit(replyId) {
+        document.querySelectorAll('[id^="reply-edit-wrap-"]').forEach(el => el.style.display = 'none');
+        document.querySelectorAll('[id^="reply-view-"]').forEach(el => el.style.display = 'block');
+        document.querySelectorAll('[id^="reply-action-"]').forEach(el => el.style.display = 'flex');
+
+        const viewEl = document.getElementById('reply-view-' + replyId);
+        const editWrapEl = document.getElementById('reply-edit-wrap-' + replyId);
+        const actionEl = document.getElementById('reply-action-' + replyId);
+
+        if (viewEl) viewEl.style.display = 'none';
+        if (editWrapEl) editWrapEl.style.display = 'block';
+        if (actionEl) actionEl.style.display = 'none';
     }
 
-    function hideLogin() {
-        document.getElementById("loginWrap").style.display = "none";
-        document.getElementById("loginErr").style.display = "none";
+    function cancelReplyEdit(replyId) {
+        const viewEl = document.getElementById('reply-view-' + replyId);
+        const editWrapEl = document.getElementById('reply-edit-wrap-' + replyId);
+        const actionEl = document.getElementById('reply-action-' + replyId);
+
+        if (viewEl) viewEl.style.display = 'block';
+        if (editWrapEl) editWrapEl.style.display = 'none';
+        if (actionEl) actionEl.style.display = 'flex';
     }
 
-    function logout() {
-        localStorage.removeItem("adminToken");
-        showLogin();
-        document.getElementById("adminPw").value = "";
+    async function saveReplyEdit(inquiryId, replyId) {
+        const textarea = document.getElementById('reply-edit-' + replyId);
+        const content = textarea ? textarea.value.trim() : '';
+
+        if (!content) {
+            alert('답변 내용을 입력하세요.');
+            return;
+        }
+
+        try {
+            await fetchWithAdmin('/api/admin/replies/' + replyId + '/edit', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content })
+            });
+
+            await fetchReplies(inquiryId);
+        } catch (err) {
+            console.error(err);
+            alert('답변 수정 실패\n' + err.message);
+        }
     }
 
-    function esc(s) {
-        return String(s)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/\n/g, '<br>');
+    async function deleteReply(inquiryId, replyId) {
+        if (!confirm('이 답변을 삭제할까요?')) return;
+
+        try {
+            await fetchWithAdmin('/api/admin/replies/' + replyId, {
+                method: 'DELETE'
+            });
+
+            await fetchReplies(inquiryId);
+        } catch (err) {
+            console.error(err);
+            alert('답변 삭제 실패\n' + err.message);
+        }
     }
 
-    function jsEsc(s) {
-        return String(s)
-            .replace(/\\/g, '\\\\')
-            .replace(/'/g, "\\'")
-            .replace(/\n/g, "\\n")
-            .replace(/\r/g, "");
+    async function changeStatus(id, value) {
+        try {
+            const updated = await fetchWithAdmin('/api/admin/inquiries/' + id + '/status', {
+                method:'PATCH',
+                headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({ status:value })
+            });
+
+            const inquiry = inquiries.find(i => i.id === id);
+            if (inquiry) inquiry.status = updated.status;
+            updateCounts();
+            renderAdmin();
+            reopenInquiryAccordion(id);
+        } catch (err) {
+            console.error(err);
+            alert('상태 변경 실패\n' + err.message);
+        }
     }
 
-    document.addEventListener('DOMContentLoaded', function () {
-        const token = localStorage.getItem("adminToken");
+    async function deleteInquiry(id) {
+        if (!confirm('이 문의를 삭제할까요?')) return;
+
+        try {
+            await fetchWithAdmin('/api/admin/inquiries/' + id, { method:'DELETE' });
+            alert('문의가 삭제되었습니다.');
+            loadInquiries();
+        } catch (err) {
+            console.error(err);
+            alert('삭제 실패\n' + err.message);
+        }
+    }
+
+    function toggleAccordionCard(element) {
+        const card = element.closest('.accordion-card');
+        const parent = card.parentElement;
+        const willOpen = !card.classList.contains('open');
+
+        parent.querySelectorAll('.accordion-card').forEach(item => {
+            item.classList.remove('open');
+        });
+
+        if (willOpen) {
+            card.classList.add('open');
+        }
+    }
+
+    function showNoticeModalError(message) {
+        const el = document.getElementById('noticeModalError');
+        el.textContent = message;
+        el.classList.add('show');
+    }
+
+    function clearNoticeModalError() {
+        const el = document.getElementById('noticeModalError');
+        el.textContent = '';
+        el.classList.remove('show');
+    }
+
+    function showFaqModalError(message) {
+        const el = document.getElementById('faqModalError');
+        el.textContent = message;
+        el.classList.add('show');
+    }
+
+    function clearFaqModalError() {
+        const el = document.getElementById('faqModalError');
+        el.textContent = '';
+        el.classList.remove('show');
+    }
+
+    function openNoticeModal() {
+        document.getElementById('noticeModalTitle').textContent = '공지 추가';
+        document.getElementById('noticeId').value = '';
+        document.getElementById('noticeCategory').value = '공지';
+        document.getElementById('noticeTitle').value = '';
+        document.getElementById('noticeContent').value = '';
+        clearNoticeModalError();
+        document.getElementById('noticeModal').classList.add('show');
+    }
+
+    function closeNoticeModal() {
+        clearNoticeModalError();
+        document.getElementById('noticeModal').classList.remove('show');
+    }
+
+    function editNoticeData(id, category, title, content) {
+        document.getElementById('noticeModalTitle').textContent = '공지 수정';
+        document.getElementById('noticeId').value = id;
+        document.getElementById('noticeCategory').value = category || '공지';
+        document.getElementById('noticeTitle').value = title || '';
+        document.getElementById('noticeContent').value = content || '';
+        clearNoticeModalError();
+        document.getElementById('noticeModal').classList.add('show');
+    }
+
+    async function saveNotice() {
+        const id = document.getElementById('noticeId').value;
+        const payload = {
+            category: document.getElementById('noticeCategory').value.trim(),
+            title: document.getElementById('noticeTitle').value.trim(),
+            content: document.getElementById('noticeContent').value.trim()
+        };
+
+        clearNoticeModalError();
+
+        if (!payload.title) {
+            showNoticeModalError('공지 제목을 입력하세요.');
+            return;
+        }
+
+        if (!payload.content) {
+            showNoticeModalError('공지 내용을 입력하세요.');
+            return;
+        }
+
+        try {
+            await fetchWithAdmin(id ? '/api/admin/notices/' + id : '/api/admin/notices', {
+                method: id ? 'PUT' : 'POST',
+                headers: { 'Content-Type':'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            closeNoticeModal();
+            loadNotices();
+        } catch (err) {
+            console.error(err);
+            showNoticeModalError('공지 저장 실패\n' + err.message);
+        }
+    }
+
+    async function deleteNotice(id) {
+        if (!confirm('이 공지사항을 삭제할까요?')) return;
+
+        try {
+            await fetchWithAdmin('/api/admin/notices/' + id, { method:'DELETE' });
+            alert('공지사항이 삭제되었습니다.');
+            loadNotices();
+        } catch (err) {
+            console.error(err);
+            alert('공지 삭제 실패\n' + err.message);
+        }
+    }
+
+    async function loadNotices() {
+        try {
+            const data = await fetchWithAdmin('/api/admin/notices');
+            notices = Array.isArray(data) ? data : [];
+            renderNotices();
+        } catch (err) {
+            console.error('공지 조회 실패:', err);
+            document.getElementById('noticeList').innerHTML = `
+              <div class="empty-list">
+                <div class="el-icon">⚠️</div>
+                <p>공지 목록을 불러오지 못했습니다.\n${esc(err.message)}</p>
+              </div>
+            `;
+        }
+    }
+
+    function renderNotices() {
+        const keyword = (document.getElementById('noticeKeyword').value || '').toLowerCase();
+
+        const filtered = [...notices]
+            .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+            .filter(n => {
+                return [n.title || '', n.content || '', n.category || '']
+                    .join(' ')
+                    .toLowerCase()
+                    .includes(keyword);
+            });
+
+        document.getElementById('noticeList').innerHTML = filtered.length ? filtered.map(n => `
+          <div class="accordion-card">
+            <div class="accordion-header" onclick="toggleAccordionCard(this)">
+              <div class="accordion-title">${esc(n.title)}</div>
+              <div class="accordion-meta">
+                <span class="accordion-badge">${esc(n.category || '공지')}</span>
+                <span class="accordion-date">${esc(formatDate(n.createdAt))}</span>
+              </div>
+              <div class="accordion-arrow">⌄</div>
+            </div>
+            <div class="accordion-body">
+              <div class="accordion-content">${esc(n.content)}</div>
+              <div class="accordion-actions">
+                <button class="btn-line" type="button" onclick="editNoticeData(${n.id}, '${jsEsc(n.category || '공지')}', '${jsEsc(n.title)}', '${jsEsc(n.content)}')">수정</button>
+                <button class="btn-danger" type="button" onclick="deleteNotice(${n.id})">삭제</button>
+              </div>
+            </div>
+          </div>
+        `).join('') : `
+          <div class="empty-list">
+            <div class="el-icon">📭</div>
+            <p>등록된 공지사항이 없습니다.</p>
+          </div>
+        `;
+    }
+
+    function openFaqModal() {
+        document.getElementById('faqModalTitle').textContent = 'FAQ 추가';
+        document.getElementById('faqId').value = '';
+        document.getElementById('faqCategory').value = '';
+        document.getElementById('faqQuestion').value = '';
+        document.getElementById('faqAnswer').value = '';
+        clearFaqModalError();
+        document.getElementById('faqModal').classList.add('show');
+    }
+
+    function closeFaqModal() {
+        clearFaqModalError();
+        document.getElementById('faqModal').classList.remove('show');
+    }
+
+    function editFaqData(id, category, question, answer) {
+        document.getElementById('faqModalTitle').textContent = 'FAQ 수정';
+        document.getElementById('faqId').value = id;
+        document.getElementById('faqCategory').value = category || '';
+        document.getElementById('faqQuestion').value = question || '';
+        document.getElementById('faqAnswer').value = answer || '';
+        clearFaqModalError();
+        document.getElementById('faqModal').classList.add('show');
+    }
+
+    async function saveFaq() {
+        const id = document.getElementById('faqId').value;
+        const payload = {
+            category: document.getElementById('faqCategory').value.trim(),
+            question: document.getElementById('faqQuestion').value.trim(),
+            answer: document.getElementById('faqAnswer').value.trim()
+        };
+
+        clearFaqModalError();
+
+        if (!payload.category) {
+            showFaqModalError('FAQ 카테고리를 입력하세요.');
+            return;
+        }
+
+        if (!payload.question) {
+            showFaqModalError('질문을 입력하세요.');
+            return;
+        }
+
+        if (!payload.answer) {
+            showFaqModalError('답변을 입력하세요.');
+            return;
+        }
+
+        try {
+            await fetchWithAdmin(id ? '/api/admin/faqs/' + id : '/api/admin/faqs', {
+                method: id ? 'PUT' : 'POST',
+                headers: { 'Content-Type':'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            closeFaqModal();
+            loadFaqs();
+        } catch (err) {
+            console.error(err);
+            showFaqModalError('FAQ 저장 실패\n' + err.message);
+        }
+    }
+
+    async function deleteFaq(id) {
+        if (!confirm('이 FAQ를 삭제할까요?')) return;
+
+        try {
+            await fetchWithAdmin('/api/admin/faqs/' + id, { method:'DELETE' });
+            alert('FAQ가 삭제되었습니다.');
+            loadFaqs();
+        } catch (err) {
+            console.error(err);
+            alert('FAQ 삭제 실패\n' + err.message);
+        }
+    }
+
+    async function loadFaqs() {
+        try {
+            const data = await fetchWithAdmin('/api/admin/faqs');
+            faqs = Array.isArray(data) ? data : [];
+            renderFaqs();
+        } catch (err) {
+            console.error('FAQ 조회 실패:', err);
+            document.getElementById('faqAdminList').innerHTML = `
+              <div class="empty-list">
+                <div class="el-icon">⚠️</div>
+                <p>FAQ 목록을 불러오지 못했습니다.\n${esc(err.message)}</p>
+              </div>
+            `;
+        }
+    }
+
+    function renderFaqs() {
+        const keyword = (document.getElementById('faqKeyword').value || '').toLowerCase();
+
+        const filtered = [...faqs]
+            .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+            .filter(f => {
+                return [f.category || '', f.question || '', f.answer || '']
+                    .join(' ')
+                    .toLowerCase()
+                    .includes(keyword);
+            });
+
+        document.getElementById('faqAdminList').innerHTML = filtered.length ? filtered.map(f => `
+          <div class="accordion-card">
+            <div class="accordion-header" onclick="toggleAccordionCard(this)">
+              <div class="accordion-title">${esc(f.question)}</div>
+              <div class="accordion-meta">
+                <span class="accordion-badge">${esc(f.category)}</span>
+                <span class="accordion-date">${esc(formatDate(f.createdAt))}</span>
+              </div>
+              <div class="accordion-arrow">⌄</div>
+            </div>
+            <div class="accordion-body">
+              <div class="accordion-content">${esc(f.answer)}</div>
+              <div class="accordion-actions">
+                <button class="btn-line" type="button" onclick="editFaqData(${f.id}, '${jsEsc(f.category)}', '${jsEsc(f.question)}', '${jsEsc(f.answer)}')">수정</button>
+                <button class="btn-danger" type="button" onclick="deleteFaq(${f.id})">삭제</button>
+              </div>
+            </div>
+          </div>
+        `).join('') : `
+          <div class="empty-list">
+            <div class="el-icon">📭</div>
+            <p>등록된 FAQ가 없습니다.</p>
+          </div>
+        `;
+    }
+
+    async function bootstrapAdmin() {
+        await Promise.all([
+            loadInquiries(),
+            loadNotices(),
+            loadFaqs()
+        ]);
+    }
+
+    document.addEventListener('DOMContentLoaded', async function () {
+        const token = localStorage.getItem('adminToken');
+
         if (token) {
             hideLogin();
-            loadInquiries();
+            await bootstrapAdmin();
         } else {
             showLogin();
         }
 
-        document.getElementById("adminPw").addEventListener("keydown", function(e) {
-            if (e.key === "Enter") {
-                adminLogin();
-            }
+        document.getElementById('adminPw').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') adminLogin();
         });
     });
 </script>
