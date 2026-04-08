@@ -1,8 +1,10 @@
 package com.sosial.damoa.controller;
 
+import com.sosial.damoa.entity.Inquiry;
 import com.sosial.damoa.entity.Reply;
 import com.sosial.damoa.repository.InquiryRepository;
 import com.sosial.damoa.repository.ReplyRepository;
+import com.sosial.damoa.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,6 +18,7 @@ public class ReplyController {
 
     private final ReplyRepository replyRepository;
     private final InquiryRepository inquiryRepository;
+    private final EmailService emailService;
 
     @GetMapping("/api/admin/replies/{inquiryId}")
     public List<Reply> getReplies(@PathVariable Long inquiryId) {
@@ -24,7 +27,7 @@ public class ReplyController {
 
     @PostMapping("/api/admin/replies/{inquiryId}")
     public Reply createReply(@PathVariable Long inquiryId, @RequestBody Map<String, String> body) {
-        inquiryRepository.findById(inquiryId)
+        Inquiry inquiry = inquiryRepository.findById(inquiryId)
                 .orElseThrow(() -> new RuntimeException("문의 없음"));
 
         String content = body.getOrDefault("content", "").trim();
@@ -36,7 +39,16 @@ public class ReplyController {
         reply.setInquiryId(inquiryId);
         reply.setContent(content);
 
-        return replyRepository.save(reply);
+        Reply savedReply = replyRepository.save(reply);
+
+        // 답변 등록 후 사용자 이메일 발송
+        emailService.sendReplyToUser(
+                inquiry.getEmail(),
+                inquiry.getTitle(),
+                content
+        );
+
+        return savedReply;
     }
 
     @PutMapping("/api/admin/replies/{replyId}/edit")

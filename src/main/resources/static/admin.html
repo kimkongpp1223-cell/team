@@ -373,6 +373,7 @@
         }
 
         .attachment-link{
+            width:100%;
             display:flex;
             align-items:center;
             gap:8px;
@@ -386,6 +387,8 @@
             line-height:1.5;
             margin-top:8px;
             word-break:break-all;
+            text-align:left;
+            cursor:pointer;
         }
 
         .attachment-link:first-of-type{
@@ -1110,13 +1113,67 @@
           <div class="attachment-box">
             <div class="attachment-title">첨부파일</div>
             ${inq.attachmentNames.map((name, index) => `
-              <a class="attachment-link" href="/api/admin/inquiries/${inq.id}/attachments/${index}">
+              <button
+                type="button"
+                class="attachment-link"
+                onclick="event.stopPropagation(); downloadAttachment(${inq.id}, ${index})">
                 <span>📎</span>
                 <span>${esc(name)}</span>
-              </a>
+              </button>
             `).join('')}
           </div>
         `;
+    }
+
+    async function downloadAttachment(inquiryId, index) {
+        try {
+            const token = getAdminToken();
+
+            const response = await fetch(`/api/admin/inquiries/${inquiryId}/attachments/${index}`, {
+                headers: {
+                    'admin-token': token,
+                    'Authorization': token ? `Bearer ${token}` : ''
+                }
+            });
+
+            if (response.status === 401) {
+                showLogin();
+                throw new Error('인증 필요');
+            }
+
+            if (!response.ok) {
+                throw new Error('다운로드 실패');
+            }
+
+            const disposition = response.headers.get('Content-Disposition') || '';
+            let fileName = 'download';
+
+            const matchUtf8 = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+            const matchBasic = disposition.match(/filename="?([^"]+)"?/i);
+
+            if (matchUtf8 && matchUtf8[1]) {
+                fileName = decodeURIComponent(matchUtf8[1]);
+            } else if (matchBasic && matchBasic[1]) {
+                fileName = matchBasic[1];
+            }
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+
+            window.URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error(err);
+            if (err.message !== '인증 필요') {
+                alert('첨부파일 다운로드 실패\n' + err.message);
+            }
+        }
     }
 
     function renderAdmin() {
