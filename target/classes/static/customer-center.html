@@ -330,7 +330,7 @@
             background:rgba(241,245,249,0.68);
             border:1px solid var(--border);
             border-radius:16px;
-            padding:28px 22px 20px;
+            padding:22px;
         }
 
         .search-box {
@@ -358,6 +358,40 @@
             border-color:rgba(20,184,166,0.45);
             box-shadow:0 0 0 4px rgba(20,184,166,0.10);
             outline:none;
+        }
+
+        .keyword-row {
+            margin-top:18px;
+            display:flex;
+            flex-wrap:wrap;
+            align-items:center;
+            gap:10px;
+        }
+
+        .keyword-label {
+            font-size:13px;
+            font-weight:800;
+            color:var(--text);
+            margin-right:2px;
+        }
+
+        .keyword-chip {
+            height:36px;
+            padding:0 14px;
+            border-radius:999px;
+            border:1px solid var(--border);
+            background:#fff;
+            color:var(--text2);
+            font-size:12px;
+            font-weight:700;
+            font-family:'Noto Sans KR',sans-serif;
+            cursor:pointer;
+            transition:all .18s;
+        }
+
+        .keyword-chip:hover {
+            border-color:rgba(20,184,166,0.32);
+            color:var(--text);
         }
 
         .featured-notice {
@@ -443,37 +477,36 @@
             font-weight:700;
         }
 
-        .category-bar {
-            margin-top:20px;
-            display:flex;
-            flex-wrap:wrap;
+        .faq-type-tabs {
+            margin-top:18px;
+            display:grid;
+            grid-template-columns:repeat(5, 1fr);
             gap:10px;
         }
 
-        .category-btn {
-            height:44px;
-            padding:0 18px;
-            border-radius:999px;
+        .faq-type-btn {
+            height:54px;
+            border-radius:14px;
             border:1px solid var(--border);
-            background:rgba(255,255,255,0.7);
+            background:#fff;
             color:var(--text2);
-            font-size:13px;
-            font-weight:700;
+            font-size:14px;
+            font-weight:800;
             font-family:'Noto Sans KR',sans-serif;
             cursor:pointer;
             transition:all .18s;
         }
 
-        .category-btn:hover {
-            border-color:rgba(20,184,166,0.22);
+        .faq-type-btn:hover {
+            border-color:rgba(20,184,166,0.24);
             color:var(--text);
         }
 
-        .category-btn.active {
-            border-color:rgba(20,184,166,0.48);
-            background:linear-gradient(135deg,rgba(20,184,166,0.18),rgba(99,102,241,0.12));
+        .faq-type-btn.active {
+            background:linear-gradient(135deg,rgba(20,184,166,0.16),rgba(99,102,241,0.10));
+            border-color:rgba(20,184,166,0.42);
             color:#0F172A;
-            box-shadow:0 0 0 3px rgba(20,184,166,0.08),0 8px 20px rgba(20,184,166,0.10);
+            box-shadow:0 0 0 3px rgba(20,184,166,0.08);
         }
 
         .section-top {
@@ -938,6 +971,7 @@
 
         @media (max-width:980px) {
             .inquiry-layout { grid-template-columns:1fr; }
+            .faq-type-tabs { grid-template-columns:repeat(3, 1fr); }
         }
 
         @media (max-width:900px) {
@@ -957,6 +991,7 @@
             .cs-hero::before,
             .cs-hero::after { display:none; }
             .top-nav { grid-template-columns:1fr; }
+            .faq-type-tabs { grid-template-columns:1fr 1fr; }
 
             .featured-title {
                 font-size:20px;
@@ -1036,26 +1071,54 @@
         </div>
         <div class="hero-accent"></div>
         <h1>무엇을 <em>도와드릴까요?</em></h1>
-        <p>공지사항, 자주 묻는 질문, 문의 접수를 한곳에서 빠르게 이용해보세요.</p>
+        <p>자주 묻는 질문과 공지사항을 한곳에서 빠르게 확인하고, 필요하면 바로 문의를 남겨보세요.</p>
     </section>
 
     <div class="top-nav">
-        <button class="top-nav-btn active" data-view="notice">공지사항</button>
-        <button class="top-nav-btn" data-view="faq">FAQ</button>
+        <button class="top-nav-btn active" data-view="faq">FAQ</button>
+        <button class="top-nav-btn" data-view="notice">공지사항</button>
         <button class="top-nav-btn" data-view="inquiry">문의하기</button>
     </div>
 
     <section class="panel">
         <div class="panel-header">
             <div class="panel-header-left">
-                <div class="panel-icon" id="panelIcon">📢</div>
-                <h2 id="panelTitle">공지사항</h2>
+                <div class="panel-icon" id="panelIcon">❓</div>
+                <h2 id="panelTitle">자주 묻는 질문</h2>
             </div>
         </div>
 
         <div class="panel-body">
 
-            <div id="noticeSection">
+            <div id="faqSection">
+                <div class="search-wrap">
+                    <div class="search-box">
+                        <input type="text" id="faqSearchInput" class="search-input" placeholder="질문이나 키워드를 입력해주세요.">
+                    </div>
+                </div>
+
+                <div class="faq-type-tabs" id="faqTypeTabs">
+                    <button class="faq-type-btn active" data-category="전체">전체</button>
+                    <button class="faq-type-btn" data-category="가입·연동">가입·연동</button>
+                    <button class="faq-type-btn" data-category="콘텐츠 생성">콘텐츠 생성</button>
+                    <button class="faq-type-btn" data-category="시스템오류">시스템오류</button>
+                    <button class="faq-type-btn" data-category="계정">계정</button>
+                </div>
+
+                <div class="section-top">
+                    <h3 id="faqListTitle">전체 FAQ</h3>
+                    <div class="section-highlight" id="faqCount">총 0개</div>
+                </div>
+
+                <div class="faq-list" id="faqList"></div>
+
+                <div class="empty-state" id="faqEmpty">
+                    <div class="el-icon">📭</div>
+                    <p>조건에 맞는 FAQ가 없습니다.<br>검색어를 바꾸거나 다른 유형을 선택해 보세요.</p>
+                </div>
+            </div>
+
+            <div id="noticeSection" class="hidden">
                 <div class="search-wrap">
                     <div class="search-box">
                         <input type="text" id="noticeSearchInput" class="search-input" placeholder="공지사항 키워드를 입력해주세요.">
@@ -1083,28 +1146,6 @@
                 <div class="empty-state" id="noticeEmpty">
                     <div class="el-icon">📭</div>
                     <p>등록된 공지사항이 없습니다.</p>
-                </div>
-            </div>
-
-            <div id="faqSection" class="hidden">
-                <div class="search-wrap">
-                    <div class="search-box">
-                        <input type="text" id="faqSearchInput" class="search-input" placeholder="질문 키워드를 입력해주세요.">
-                    </div>
-                </div>
-
-                <div class="category-bar" id="faqCategoryBar"></div>
-
-                <div class="section-top">
-                    <h3 id="faqListTitle">전체 FAQ</h3>
-                    <div class="section-highlight" id="faqCount">총 0개</div>
-                </div>
-
-                <div class="faq-list" id="faqList"></div>
-
-                <div class="empty-state" id="faqEmpty">
-                    <div class="el-icon">📭</div>
-                    <p>조건에 맞는 FAQ가 없습니다.<br>검색어를 바꾸거나 다른 카테고리를 선택해 보세요.</p>
                 </div>
             </div>
 
@@ -1211,8 +1252,9 @@
 
 <script>
     const topNavButtons = document.querySelectorAll('.top-nav-btn');
-    const noticeSearchInput = document.getElementById('noticeSearchInput');
     const faqSearchInput = document.getElementById('faqSearchInput');
+    const noticeSearchInput = document.getElementById('noticeSearchInput');
+    const keywordChips = document.querySelectorAll('.keyword-chip');
 
     const faqSection = document.getElementById('faqSection');
     const noticeSection = document.getElementById('noticeSection');
@@ -1242,8 +1284,8 @@
     const fileList = document.getElementById('fileList');
     const fileSummary = document.getElementById('fileSummary');
 
-    let currentView = 'notice';
-    let currentCategory = '전체';
+    let currentView = 'faq';
+    let currentFaqCategory = '전체';
     let selectedFiles = [];
     let notices = [];
     let faqs = [];
@@ -1305,16 +1347,16 @@
         noticeSection.classList.add('hidden');
         inquirySection.classList.add('hidden');
 
-        if (view === 'notice') {
-            noticeSection.classList.remove('hidden');
-            panelTitle.textContent = '공지사항';
-            panelIcon.textContent = '📢';
-            renderNotices();
-        } else if (view === 'faq') {
+        if (view === 'faq') {
             faqSection.classList.remove('hidden');
             panelTitle.textContent = '자주 묻는 질문';
             panelIcon.textContent = '❓';
             renderFaqs();
+        } else if (view === 'notice') {
+            noticeSection.classList.remove('hidden');
+            panelTitle.textContent = '공지사항';
+            panelIcon.textContent = '📢';
+            renderNotices();
         } else {
             inquirySection.classList.remove('hidden');
             panelTitle.textContent = '문의하기';
@@ -1391,14 +1433,14 @@
 
         const filtered = sorted.filter(item => {
             const category = normalizeCategory(item.category);
-            const categoryMatch = currentCategory === '전체' || currentCategory === category;
+            const categoryMatch = currentFaqCategory === '전체' || currentFaqCategory === category;
             const bucket = [item.question || '', item.answer || '', category].join(' ').toLowerCase();
             const keywordMatch = !keyword || bucket.includes(keyword);
             return categoryMatch && keywordMatch;
         });
 
         const list = document.getElementById('faqList');
-        faqListTitle.textContent = currentCategory === '전체' ? '전체 FAQ' : `${currentCategory} FAQ`;
+        faqListTitle.textContent = currentFaqCategory === '전체' ? '전체 FAQ' : `${currentFaqCategory} FAQ`;
         faqCount.textContent = `총 ${filtered.length}개`;
         faqEmpty.classList.toggle('show', filtered.length === 0);
 
@@ -1419,28 +1461,16 @@
         bindAccordion('.faq-question', '.faq-item');
     }
 
-    function bindCategoryButtons() {
-        document.querySelectorAll('.category-btn').forEach(button => {
+    function bindFaqTypeTabs() {
+        document.querySelectorAll('.faq-type-btn').forEach(button => {
             button.addEventListener('click', () => {
-                currentCategory = button.dataset.category;
-                document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
+                currentFaqCategory = button.dataset.category;
+                document.querySelectorAll('.faq-type-btn').forEach(btn => btn.classList.remove('active'));
                 button.classList.add('active');
                 closeAllAccordion('.faq-item');
                 renderFaqs();
             });
         });
-    }
-
-    function renderFaqCategories() {
-        const bar = document.getElementById('faqCategoryBar');
-        const categories = ['전체', ...new Set(faqs.map(item => normalizeCategory(item.category)))];
-
-        bar.innerHTML = categories.map((category, index) => `
-        <button class="category-btn ${index === 0 ? 'active' : ''}" data-category="${escapeHtml(category)}">${escapeHtml(category)}</button>
-      `).join('');
-
-        currentCategory = '전체';
-        bindCategoryButtons();
     }
 
     function renderFiles() {
@@ -1493,7 +1523,6 @@
             console.error(error);
             faqs = [];
         }
-        renderFaqCategories();
         renderFaqs();
     }
 
@@ -1504,8 +1533,15 @@
         });
     });
 
-    noticeSearchInput.addEventListener('input', renderNotices);
     faqSearchInput.addEventListener('input', renderFaqs);
+    noticeSearchInput.addEventListener('input', renderNotices);
+
+    keywordChips.forEach(chip => {
+        chip.addEventListener('click', () => {
+            faqSearchInput.value = chip.dataset.keyword || '';
+            renderFaqs();
+        });
+    });
 
     fileInput.addEventListener('change', (e) => {
         const newFiles = Array.from(e.target.files || []);
@@ -1565,10 +1601,11 @@
         }
     });
 
+    bindFaqTypeTabs();
     renderFiles();
-    loadNotices();
     loadFaqs();
-    switchView('notice');
+    loadNotices();
+    switchView('faq');
 </script>
 </body>
 </html>

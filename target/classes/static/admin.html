@@ -679,7 +679,13 @@
 
             <div class="field">
                 <label for="faqCategory">카테고리</label>
-                <input id="faqCategory" placeholder="예: 가입·연동, 시스템오류, 계정">
+                <select id="faqCategory">
+                    <option value="">카테고리 선택</option>
+                    <option value="가입·연동">가입·연동</option>
+                    <option value="콘텐츠 생성">콘텐츠 생성</option>
+                    <option value="시스템오류">시스템오류</option>
+                    <option value="계정">계정</option>
+                </select>
             </div>
 
             <div class="field">
@@ -886,8 +892,9 @@
         return String(text).split(',').map(v => v.trim()).filter(Boolean);
     }
 
+    // ✅ 변경: localStorage -> sessionStorage
     function getAdminToken() {
-        return localStorage.getItem('adminToken') || '';
+        return sessionStorage.getItem('adminToken') || '';
     }
 
     async function fetchWithAdmin(url, options = {}) {
@@ -970,7 +977,9 @@
                 throw new Error('로그인 응답에 token 값이 없음');
             }
 
-            localStorage.setItem('adminToken', token);
+            // ✅ 변경: localStorage -> sessionStorage
+            sessionStorage.setItem('adminToken', token);
+
             hideLogin();
             await bootstrapAdmin();
         } catch (err) {
@@ -989,12 +998,41 @@
         document.getElementById('loginErr').style.display = 'none';
     }
 
-    function logout() {
-        localStorage.removeItem('adminToken');
+    function resetAdminState() {
         inquiries = [];
         notices = [];
         faqs = [];
-        document.getElementById('adminPw').value = '';
+
+        const adminIdEl = document.getElementById('adminId');
+        const adminPwEl = document.getElementById('adminPw');
+        const loginErrEl = document.getElementById('loginErr');
+
+        if (adminIdEl) adminIdEl.value = '';
+        if (adminPwEl) adminPwEl.value = '';
+        if (loginErrEl) {
+            loginErrEl.textContent = '';
+            loginErrEl.style.display = 'none';
+        }
+
+        const inquiryListEl = document.getElementById('inquiryList');
+        const noticeListEl = document.getElementById('noticeList');
+        const faqListEl = document.getElementById('faqAdminList');
+
+        if (inquiryListEl) inquiryListEl.innerHTML = '';
+        if (noticeListEl) noticeListEl.innerHTML = '';
+        if (faqListEl) faqListEl.innerHTML = '';
+
+        const countIds = ['cntAll', 'cntP', 'cntR', 'cntD', 'fc-전체', 'fc-가입·연동', 'fc-콘텐츠 생성', 'fc-시스템오류', 'fc-계정', 'fc-기타'];
+        countIds.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = '0';
+        });
+    }
+
+    function logout() {
+        // ✅ 변경: localStorage -> sessionStorage
+        sessionStorage.removeItem('adminToken');
+        resetAdminState();
         showLogin();
     }
 
@@ -1081,23 +1119,23 @@
                       type="button"
                       class="btn-main"
                       onclick="event.stopPropagation(); saveReplyEdit(${inq.id}, ${r.id})">
-                      수정 저장
+                      저장
                     </button>
                   </div>
                 </div>
 
-                <div id="reply-action-${r.id}" class="reply-inline-actions">
+                <div class="reply-inline-actions" id="reply-actions-${r.id}">
                   <button
                     type="button"
                     class="btn-line"
-                    onclick="event.stopPropagation(); startReplyEdit(${r.id})">
-                    답변 수정
+                    onclick="event.stopPropagation(); openReplyEdit(${r.id})">
+                    수정
                   </button>
                   <button
                     type="button"
                     class="btn-danger"
                     onclick="event.stopPropagation(); deleteReply(${inq.id}, ${r.id})">
-                    답변 삭제
+                    삭제
                   </button>
                 </div>
               </div>
@@ -1106,129 +1144,97 @@
         `;
     }
 
-    function renderFiles(inq) {
-        if (!inq.attachmentNames || !inq.attachmentNames.length) return '';
-
-        return `
-          <div class="attachment-box">
-            <div class="attachment-title">첨부파일</div>
-            ${inq.attachmentNames.map((name, index) => `
-              <button
-                type="button"
-                class="attachment-link"
-                onclick="event.stopPropagation(); downloadAttachment(${inq.id}, ${index})">
-                <span>📎</span>
-                <span>${esc(name)}</span>
-              </button>
-            `).join('')}
-          </div>
-        `;
+    function toggleAccordionCard(el) {
+        const card = el.closest('.accordion-card');
+        if (card) card.classList.toggle('open');
     }
 
-    async function downloadAttachment(inquiryId, index) {
+    function normalizeInquiry(item) {
+        return {
+            ...item,
+            replies: Array.isArray(item.replies) ? item.replies : []
+        };
+    }
+
+    async function loadInquiries() {
         try {
-            const token = getAdminToken();
-
-            const response = await fetch(`/api/admin/inquiries/${inquiryId}/attachments/${index}`, {
-                headers: {
-                    'admin-token': token,
-                    'Authorization': token ? `Bearer ${token}` : ''
-                }
-            });
-
-            if (response.status === 401) {
-                showLogin();
-                throw new Error('인증 필요');
-            }
-
-            if (!response.ok) {
-                throw new Error('다운로드 실패');
-            }
-
-            const disposition = response.headers.get('Content-Disposition') || '';
-            let fileName = 'download';
-
-            const matchUtf8 = disposition.match(/filename\*=UTF-8''([^;]+)/i);
-            const matchBasic = disposition.match(/filename="?([^"]+)"?/i);
-
-            if (matchUtf8 && matchUtf8[1]) {
-                fileName = decodeURIComponent(matchUtf8[1]);
-            } else if (matchBasic && matchBasic[1]) {
-                fileName = matchBasic[1];
-            }
-
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = fileName;
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-
-            window.URL.revokeObjectURL(url);
+            const data = await fetchWithAdmin('/api/admin/inquiries');
+            inquiries = Array.isArray(data) ? data.map(normalizeInquiry) : [];
+            updateCounts();
+            renderAdmin();
         } catch (err) {
-            console.error(err);
-            if (err.message !== '인증 필요') {
-                alert('첨부파일 다운로드 실패\n' + err.message);
+            console.error('문의 목록 로드 실패', err);
+            if (String(err.message || '').includes('status=401') || String(err.message || '').includes('status=403')) {
+                alert('로그인이 만료되었습니다. 다시 로그인해주세요.');
+                logout();
+                return;
             }
+            document.getElementById('inquiryList').innerHTML = `
+              <div class="empty-list">
+                <div class="el-icon">⚠️</div>
+                <p>문의 목록을 불러오지 못했습니다.\n${esc(err.message)}</p>
+              </div>
+            `;
         }
     }
 
     function renderAdmin() {
-        let list = inquiries.filter(inq => {
-            const typeMatch = curFilter === '전체' || inq.type === curFilter;
-            const statusMatch = curStatus === '전체' || inq.status === curStatus;
-            const keywordMatch = matchesKeyword(inq, curKeyword);
-            return typeMatch && statusMatch && keywordMatch;
-        });
+        let list = [...inquiries];
 
-        list.sort((a, b) => {
-            const ad = a.rawDate ? new Date(a.rawDate).getTime() : 0;
-            const bd = b.rawDate ? new Date(b.rawDate).getTime() : 0;
+        if (curFilter !== '전체') {
+            list = list.filter(i => i.type === curFilter);
+        }
 
-            if (curSort === 'oldest') return ad - bd;
-            if (curSort === 'pending') {
-                if (a.status === '미처리' && b.status !== '미처리') return -1;
-                if (a.status !== '미처리' && b.status === '미처리') return 1;
-            }
-            return bd - ad;
-        });
+        if (curStatus !== '전체') {
+            list = list.filter(i => i.status === curStatus);
+        }
 
-        const html = list.length ? list.map(inq => `
-          <div class="accordion-card" data-inquiry-id="${inq.id}">
-            <div class="accordion-header" onclick="toggleInquiry(${inq.id}, this)">
-              <span class="i-type">${esc(inq.type)}</span>
-              <span class="accordion-title">${esc(inq.title)}</span>
-              <span class="sb ${SC[inq.status] || 'sb-p'}">${SL[inq.status] || '⏳ 미처리'}</span>
+        if (curKeyword) {
+            list = list.filter(i => matchesKeyword(i, curKeyword));
+        }
+
+        if (curSort === 'latest') {
+            list.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+        } else if (curSort === 'oldest') {
+            list.sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
+        } else if (curSort === 'pending') {
+            const order = { '미처리': 0, '처리중': 1, '처리완료': 2 };
+            list.sort((a, b) => {
+                const byStatus = (order[a.status] ?? 99) - (order[b.status] ?? 99);
+                if (byStatus !== 0) return byStatus;
+                return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+            });
+        }
+
+        document.getElementById('inquiryList').innerHTML = list.length ? list.map(inq => `
+          <div class="accordion-card">
+            <div class="accordion-header" onclick="toggleAccordionCard(this)">
+              <div class="accordion-title">${esc(inq.title)}</div>
+              <div class="accordion-meta">
+                <span class="i-type">${esc(inq.type)}</span>
+                <span class="sb ${SC[inq.status] || 'sb-p'}">${SL[inq.status] || esc(inq.status)}</span>
+                <span class="accordion-date">${esc(formatDate(inq.createdAt))}</span>
+              </div>
               <div class="accordion-arrow">⌄</div>
             </div>
 
             <div class="accordion-body">
-              <div class="body-text">${esc(inq.body)}</div>
-
-              ${renderFiles(inq)}
+              <div class="accordion-content">${esc(inq.body)}</div>
 
               <div class="detail-meta">
-                ${esc(inq.email)} · ${esc(inq.date)}
+                이메일: ${esc(inq.email)}<br>
+                문의번호: ${esc(inq.id)}<br>
+                상태: ${esc(inq.status)}
               </div>
 
+              ${renderAttachments(inq)}
               ${renderReplies(inq)}
 
               <div class="new-reply-box">
-                <div class="new-reply-title">새 답변 등록</div>
-                <textarea class="reply-ta" id="reply-${inq.id}" placeholder="답변을 작성하세요."></textarea>
-
-                <div class="accordion-actions">
-                  <select class="sel" style="min-width:150px;" onchange="changeStatus(${inq.id}, this.value)">
-                    <option value="미처리" ${inq.status === '미처리' ? 'selected' : ''}>⏳ 미처리</option>
-                    <option value="처리중" ${inq.status === '처리중' ? 'selected' : ''}>🔄 처리중</option>
-                    <option value="처리완료" ${inq.status === '처리완료' ? 'selected' : ''}>✅ 처리완료</option>
-                  </select>
-
-                  <button type="button" class="btn-danger" onclick="event.stopPropagation(); deleteInquiry(${inq.id})">삭제</button>
-                  <button type="button" class="btn-main" onclick="event.stopPropagation(); saveReply(${inq.id})">답변 등록</button>
+                <div class="new-reply-title">답변 등록</div>
+                <textarea id="reply-new-${inq.id}" class="reply-edit-ta" placeholder="답변 내용을 입력하세요"></textarea>
+                <div class="reply-inline-actions">
+                  <button type="button" class="btn-main" onclick="createReply(${inq.id})">답변 등록</button>
                 </div>
               </div>
             </div>
@@ -1239,133 +1245,53 @@
             <p>조건에 맞는 문의가 없습니다.</p>
           </div>
         `;
-
-        document.getElementById('inquiryList').innerHTML = html;
     }
 
-    async function loadInquiries() {
-        try {
-            const data = await fetchWithAdmin('/api/admin/inquiries');
+    function renderAttachments(inq) {
+        const names = Array.isArray(inq.attachmentNames)
+            ? inq.attachmentNames
+            : parseAttachmentNames(inq.attachmentNames);
 
-            inquiries = (data || []).map(i => ({
-                id: i.id,
-                type: i.type,
-                email: i.email,
-                title: i.title,
-                body: i.body,
-                status: i.status || '미처리',
-                date: formatDate(i.createdAt),
-                rawDate: i.createdAt,
-                attachmentNames: parseAttachmentNames(i.attachmentNames),
-                replies: []
-            }));
+        if (!names.length) return '';
 
-            updateCounts();
-            renderAdmin();
-        } catch (err) {
-            console.error('문의 목록 조회 실패:', err);
-            document.getElementById('inquiryList').innerHTML = `
-              <div class="empty-list">
-                <div class="el-icon">⚠️</div>
-                <p>문의 목록을 불러오지 못했습니다.\n${esc(err.message)}</p>
-              </div>
-            `;
-        }
+        return `
+          <div class="attachment-box">
+            <div class="attachment-title">첨부파일</div>
+            ${names.map(name => `
+              <a
+                class="attachment-link"
+                href="/api/admin/inquiries/${inq.id}/attachments/${encodeURIComponent(name)}"
+                target="_blank"
+                onclick="event.stopPropagation()"
+              >📎 ${esc(name)}</a>
+            `).join('')}
+          </div>
+        `;
     }
 
-    async function fetchReplies(id) {
-        try {
-            const data = await fetchWithAdmin('/api/admin/replies/' + id);
-            const inquiry = inquiries.find(i => i.id === id);
-            if (inquiry) {
-                inquiry.replies = Array.isArray(data) ? data : [];
-            }
-            renderAdmin();
-            reopenInquiryAccordion(id);
-        } catch (err) {
-            console.error('답변 조회 실패:', err);
-        }
-    }
+    function openReplyEdit(replyId) {
+        const view = document.getElementById(`reply-view-${replyId}`);
+        const editWrap = document.getElementById(`reply-edit-wrap-${replyId}`);
+        const actions = document.getElementById(`reply-actions-${replyId}`);
 
-    function reopenInquiryAccordion(id) {
-        const card = document.querySelector(`[data-inquiry-id="${id}"]`);
-        if (card) {
-            card.classList.add('open');
-        }
-    }
-
-    function toggleInquiry(id, element) {
-        const card = element.closest('.accordion-card');
-        const parent = card.parentElement;
-        const willOpen = !card.classList.contains('open');
-
-        parent.querySelectorAll('.accordion-card').forEach(item => {
-            item.classList.remove('open');
-        });
-
-        if (willOpen) {
-            card.classList.add('open');
-            fetchReplies(id);
-        }
-    }
-
-    async function saveReply(id) {
-        const textarea = document.getElementById('reply-' + id);
-        const content = textarea.value.trim();
-
-        if (!content) {
-            alert('답변을 입력하세요');
-            return;
-        }
-
-        try {
-            await fetchWithAdmin('/api/admin/replies/' + id, {
-                method:'POST',
-                headers:{'Content-Type':'application/json'},
-                body:JSON.stringify({ content })
-            });
-
-            await fetchWithAdmin('/api/admin/inquiries/' + id + '/status', {
-                method:'PATCH',
-                headers:{'Content-Type':'application/json'},
-                body:JSON.stringify({ status:'처리중' })
-            });
-
-            await loadInquiries();
-            await fetchReplies(id);
-        } catch (err) {
-            console.error(err);
-            alert('답변 저장 또는 상태 변경 실패\n' + err.message);
-        }
-    }
-
-    function startReplyEdit(replyId) {
-        document.querySelectorAll('[id^="reply-edit-wrap-"]').forEach(el => el.style.display = 'none');
-        document.querySelectorAll('[id^="reply-view-"]').forEach(el => el.style.display = 'block');
-        document.querySelectorAll('[id^="reply-action-"]').forEach(el => el.style.display = 'flex');
-
-        const viewEl = document.getElementById('reply-view-' + replyId);
-        const editWrapEl = document.getElementById('reply-edit-wrap-' + replyId);
-        const actionEl = document.getElementById('reply-action-' + replyId);
-
-        if (viewEl) viewEl.style.display = 'none';
-        if (editWrapEl) editWrapEl.style.display = 'block';
-        if (actionEl) actionEl.style.display = 'none';
+        if (view) view.style.display = 'none';
+        if (editWrap) editWrap.style.display = 'block';
+        if (actions) actions.style.display = 'none';
     }
 
     function cancelReplyEdit(replyId) {
-        const viewEl = document.getElementById('reply-view-' + replyId);
-        const editWrapEl = document.getElementById('reply-edit-wrap-' + replyId);
-        const actionEl = document.getElementById('reply-action-' + replyId);
+        const view = document.getElementById(`reply-view-${replyId}`);
+        const editWrap = document.getElementById(`reply-edit-wrap-${replyId}`);
+        const actions = document.getElementById(`reply-actions-${replyId}`);
 
-        if (viewEl) viewEl.style.display = 'block';
-        if (editWrapEl) editWrapEl.style.display = 'none';
-        if (actionEl) actionEl.style.display = 'flex';
+        if (view) view.style.display = 'block';
+        if (editWrap) editWrap.style.display = 'none';
+        if (actions) actions.style.display = 'flex';
     }
 
-    async function saveReplyEdit(inquiryId, replyId) {
-        const textarea = document.getElementById('reply-edit-' + replyId);
-        const content = textarea ? textarea.value.trim() : '';
+    async function createReply(inquiryId) {
+        const textarea = document.getElementById(`reply-new-${inquiryId}`);
+        const content = (textarea?.value || '').trim();
 
         if (!content) {
             alert('답변 내용을 입력하세요.');
@@ -1373,13 +1299,37 @@
         }
 
         try {
-            await fetchWithAdmin('/api/admin/replies/' + replyId + '/edit', {
+            await fetchWithAdmin(`/api/admin/inquiries/${inquiryId}/replies`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content })
+            });
+
+            textarea.value = '';
+            await loadInquiries();
+        } catch (err) {
+            console.error(err);
+            alert('답변 등록 실패\n' + err.message);
+        }
+    }
+
+    async function saveReplyEdit(inquiryId, replyId) {
+        const textarea = document.getElementById(`reply-edit-${replyId}`);
+        const content = (textarea?.value || '').trim();
+
+        if (!content) {
+            alert('답변 내용을 입력하세요.');
+            return;
+        }
+
+        try {
+            await fetchWithAdmin(`/api/admin/inquiries/${inquiryId}/replies/${replyId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ content })
             });
 
-            await fetchReplies(inquiryId);
+            await loadInquiries();
         } catch (err) {
             console.error(err);
             alert('답변 수정 실패\n' + err.message);
@@ -1387,160 +1337,17 @@
     }
 
     async function deleteReply(inquiryId, replyId) {
-        if (!confirm('이 답변을 삭제할까요?')) return;
+        if (!confirm('답변을 삭제하시겠습니까?')) return;
 
         try {
-            await fetchWithAdmin('/api/admin/replies/' + replyId, {
+            await fetchWithAdmin(`/api/admin/inquiries/${inquiryId}/replies/${replyId}`, {
                 method: 'DELETE'
             });
 
-            await fetchReplies(inquiryId);
+            await loadInquiries();
         } catch (err) {
             console.error(err);
             alert('답변 삭제 실패\n' + err.message);
-        }
-    }
-
-    async function changeStatus(id, value) {
-        try {
-            const updated = await fetchWithAdmin('/api/admin/inquiries/' + id + '/status', {
-                method:'PATCH',
-                headers:{'Content-Type':'application/json'},
-                body:JSON.stringify({ status:value })
-            });
-
-            const inquiry = inquiries.find(i => i.id === id);
-            if (inquiry) inquiry.status = updated.status;
-            updateCounts();
-            renderAdmin();
-            reopenInquiryAccordion(id);
-        } catch (err) {
-            console.error(err);
-            alert('상태 변경 실패\n' + err.message);
-        }
-    }
-
-    async function deleteInquiry(id) {
-        if (!confirm('이 문의를 삭제할까요?')) return;
-
-        try {
-            await fetchWithAdmin('/api/admin/inquiries/' + id, { method:'DELETE' });
-            alert('문의가 삭제되었습니다.');
-            loadInquiries();
-        } catch (err) {
-            console.error(err);
-            alert('삭제 실패\n' + err.message);
-        }
-    }
-
-    function toggleAccordionCard(element) {
-        const card = element.closest('.accordion-card');
-        const parent = card.parentElement;
-        const willOpen = !card.classList.contains('open');
-
-        parent.querySelectorAll('.accordion-card').forEach(item => {
-            item.classList.remove('open');
-        });
-
-        if (willOpen) {
-            card.classList.add('open');
-        }
-    }
-
-    function showNoticeModalError(message) {
-        const el = document.getElementById('noticeModalError');
-        el.textContent = message;
-        el.classList.add('show');
-    }
-
-    function clearNoticeModalError() {
-        const el = document.getElementById('noticeModalError');
-        el.textContent = '';
-        el.classList.remove('show');
-    }
-
-    function showFaqModalError(message) {
-        const el = document.getElementById('faqModalError');
-        el.textContent = message;
-        el.classList.add('show');
-    }
-
-    function clearFaqModalError() {
-        const el = document.getElementById('faqModalError');
-        el.textContent = '';
-        el.classList.remove('show');
-    }
-
-    function openNoticeModal() {
-        document.getElementById('noticeModalTitle').textContent = '공지 추가';
-        document.getElementById('noticeId').value = '';
-        document.getElementById('noticeCategory').value = '공지';
-        document.getElementById('noticeTitle').value = '';
-        document.getElementById('noticeContent').value = '';
-        clearNoticeModalError();
-        document.getElementById('noticeModal').classList.add('show');
-    }
-
-    function closeNoticeModal() {
-        clearNoticeModalError();
-        document.getElementById('noticeModal').classList.remove('show');
-    }
-
-    function editNoticeData(id, category, title, content) {
-        document.getElementById('noticeModalTitle').textContent = '공지 수정';
-        document.getElementById('noticeId').value = id;
-        document.getElementById('noticeCategory').value = category || '공지';
-        document.getElementById('noticeTitle').value = title || '';
-        document.getElementById('noticeContent').value = content || '';
-        clearNoticeModalError();
-        document.getElementById('noticeModal').classList.add('show');
-    }
-
-    async function saveNotice() {
-        const id = document.getElementById('noticeId').value;
-        const payload = {
-            category: document.getElementById('noticeCategory').value.trim(),
-            title: document.getElementById('noticeTitle').value.trim(),
-            content: document.getElementById('noticeContent').value.trim()
-        };
-
-        clearNoticeModalError();
-
-        if (!payload.title) {
-            showNoticeModalError('공지 제목을 입력하세요.');
-            return;
-        }
-
-        if (!payload.content) {
-            showNoticeModalError('공지 내용을 입력하세요.');
-            return;
-        }
-
-        try {
-            await fetchWithAdmin(id ? '/api/admin/notices/' + id : '/api/admin/notices', {
-                method: id ? 'PUT' : 'POST',
-                headers: { 'Content-Type':'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            closeNoticeModal();
-            loadNotices();
-        } catch (err) {
-            console.error(err);
-            showNoticeModalError('공지 저장 실패\n' + err.message);
-        }
-    }
-
-    async function deleteNotice(id) {
-        if (!confirm('이 공지사항을 삭제할까요?')) return;
-
-        try {
-            await fetchWithAdmin('/api/admin/notices/' + id, { method:'DELETE' });
-            alert('공지사항이 삭제되었습니다.');
-            loadNotices();
-        } catch (err) {
-            console.error(err);
-            alert('공지 삭제 실패\n' + err.message);
         }
     }
 
@@ -1550,7 +1357,7 @@
             notices = Array.isArray(data) ? data : [];
             renderNotices();
         } catch (err) {
-            console.error('공지 조회 실패:', err);
+            console.error('공지 목록 로드 실패', err);
             document.getElementById('noticeList').innerHTML = `
               <div class="empty-list">
                 <div class="el-icon">⚠️</div>
@@ -1561,12 +1368,12 @@
     }
 
     function renderNotices() {
-        const keyword = (document.getElementById('noticeKeyword').value || '').toLowerCase();
+        const keyword = (document.getElementById('noticeKeyword')?.value || '').trim().toLowerCase();
 
         const filtered = [...notices]
             .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
             .filter(n => {
-                return [n.title || '', n.content || '', n.category || '']
+                return [n.category || '', n.title || '', n.content || '']
                     .join(' ')
                     .toLowerCase()
                     .includes(keyword);
@@ -1577,7 +1384,7 @@
             <div class="accordion-header" onclick="toggleAccordionCard(this)">
               <div class="accordion-title">${esc(n.title)}</div>
               <div class="accordion-meta">
-                <span class="accordion-badge">${esc(n.category || '공지')}</span>
+                <span class="accordion-badge">${esc(n.category)}</span>
                 <span class="accordion-date">${esc(formatDate(n.createdAt))}</span>
               </div>
               <div class="accordion-arrow">⌄</div>
@@ -1585,7 +1392,7 @@
             <div class="accordion-body">
               <div class="accordion-content">${esc(n.content)}</div>
               <div class="accordion-actions">
-                <button class="btn-line" type="button" onclick="editNoticeData(${n.id}, '${jsEsc(n.category || '공지')}', '${jsEsc(n.title)}', '${jsEsc(n.content)}')">수정</button>
+                <button class="btn-line" type="button" onclick="editNoticeData(${n.id}, '${jsEsc(n.category)}', '${jsEsc(n.title)}', '${jsEsc(n.content)}')">수정</button>
                 <button class="btn-danger" type="button" onclick="deleteNotice(${n.id})">삭제</button>
               </div>
             </div>
@@ -1598,81 +1405,85 @@
         `;
     }
 
-    function openFaqModal() {
-        document.getElementById('faqModalTitle').textContent = 'FAQ 추가';
-        document.getElementById('faqId').value = '';
-        document.getElementById('faqCategory').value = '';
-        document.getElementById('faqQuestion').value = '';
-        document.getElementById('faqAnswer').value = '';
-        clearFaqModalError();
-        document.getElementById('faqModal').classList.add('show');
+    function openNoticeModal() {
+        document.getElementById('noticeModalTitle').textContent = '공지 추가';
+        document.getElementById('noticeId').value = '';
+        document.getElementById('noticeCategory').value = '공지';
+        document.getElementById('noticeTitle').value = '';
+        document.getElementById('noticeContent').value = '';
+        hideNoticeModalError();
+        document.getElementById('noticeModal').classList.add('show');
     }
 
-    function closeFaqModal() {
-        clearFaqModalError();
-        document.getElementById('faqModal').classList.remove('show');
+    function editNoticeData(id, category, title, content) {
+        document.getElementById('noticeModalTitle').textContent = '공지 수정';
+        document.getElementById('noticeId').value = id;
+        document.getElementById('noticeCategory').value = category || '공지';
+        document.getElementById('noticeTitle').value = title || '';
+        document.getElementById('noticeContent').value = content || '';
+        hideNoticeModalError();
+        document.getElementById('noticeModal').classList.add('show');
     }
 
-    function editFaqData(id, category, question, answer) {
-        document.getElementById('faqModalTitle').textContent = 'FAQ 수정';
-        document.getElementById('faqId').value = id;
-        document.getElementById('faqCategory').value = category || '';
-        document.getElementById('faqQuestion').value = question || '';
-        document.getElementById('faqAnswer').value = answer || '';
-        clearFaqModalError();
-        document.getElementById('faqModal').classList.add('show');
+    function closeNoticeModal() {
+        document.getElementById('noticeModal').classList.remove('show');
     }
 
-    async function saveFaq() {
-        const id = document.getElementById('faqId').value;
-        const payload = {
-            category: document.getElementById('faqCategory').value.trim(),
-            question: document.getElementById('faqQuestion').value.trim(),
-            answer: document.getElementById('faqAnswer').value.trim()
-        };
+    function showNoticeModalError(message) {
+        const el = document.getElementById('noticeModalError');
+        el.textContent = message || '오류가 발생했습니다.';
+        el.classList.add('show');
+    }
 
-        clearFaqModalError();
+    function hideNoticeModalError() {
+        document.getElementById('noticeModalError').classList.remove('show');
+    }
 
-        if (!payload.category) {
-            showFaqModalError('FAQ 카테고리를 입력하세요.');
-            return;
-        }
+    async function saveNotice() {
+        const id = document.getElementById('noticeId').value.trim();
+        const category = document.getElementById('noticeCategory').value.trim();
+        const title = document.getElementById('noticeTitle').value.trim();
+        const content = document.getElementById('noticeContent').value.trim();
 
-        if (!payload.question) {
-            showFaqModalError('질문을 입력하세요.');
-            return;
-        }
-
-        if (!payload.answer) {
-            showFaqModalError('답변을 입력하세요.');
+        if (!category || !title || !content) {
+            showNoticeModalError('분류, 제목, 내용을 모두 입력하세요.');
             return;
         }
 
         try {
-            await fetchWithAdmin(id ? '/api/admin/faqs/' + id : '/api/admin/faqs', {
-                method: id ? 'PUT' : 'POST',
-                headers: { 'Content-Type':'application/json' },
-                body: JSON.stringify(payload)
+            if (id) {
+                await fetchWithAdmin(`/api/admin/notices/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ category, title, content })
+                });
+            } else {
+                await fetchWithAdmin('/api/admin/notices', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ category, title, content })
+                });
+            }
+
+            closeNoticeModal();
+            await loadNotices();
+        } catch (err) {
+            console.error(err);
+            showNoticeModalError('공지 저장 실패\n' + err.message);
+        }
+    }
+
+    async function deleteNotice(id) {
+        if (!confirm('공지사항을 삭제하시겠습니까?')) return;
+
+        try {
+            await fetchWithAdmin(`/api/admin/notices/${id}`, {
+                method: 'DELETE'
             });
-
-            closeFaqModal();
-            loadFaqs();
+            await loadNotices();
         } catch (err) {
             console.error(err);
-            showFaqModalError('FAQ 저장 실패\n' + err.message);
-        }
-    }
-
-    async function deleteFaq(id) {
-        if (!confirm('이 FAQ를 삭제할까요?')) return;
-
-        try {
-            await fetchWithAdmin('/api/admin/faqs/' + id, { method:'DELETE' });
-            alert('FAQ가 삭제되었습니다.');
-            loadFaqs();
-        } catch (err) {
-            console.error(err);
-            alert('FAQ 삭제 실패\n' + err.message);
+            alert('공지 삭제 실패\n' + err.message);
         }
     }
 
@@ -1682,7 +1493,7 @@
             faqs = Array.isArray(data) ? data : [];
             renderFaqs();
         } catch (err) {
-            console.error('FAQ 조회 실패:', err);
+            console.error('FAQ 목록 로드 실패', err);
             document.getElementById('faqAdminList').innerHTML = `
               <div class="empty-list">
                 <div class="el-icon">⚠️</div>
@@ -1693,7 +1504,7 @@
     }
 
     function renderFaqs() {
-        const keyword = (document.getElementById('faqKeyword').value || '').toLowerCase();
+        const keyword = (document.getElementById('faqKeyword')?.value || '').trim().toLowerCase();
 
         const filtered = [...faqs]
             .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
@@ -1730,6 +1541,88 @@
         `;
     }
 
+    function openFaqModal() {
+        document.getElementById('faqModalTitle').textContent = 'FAQ 추가';
+        document.getElementById('faqId').value = '';
+        document.getElementById('faqCategory').value = '';
+        document.getElementById('faqQuestion').value = '';
+        document.getElementById('faqAnswer').value = '';
+        hideFaqModalError();
+        document.getElementById('faqModal').classList.add('show');
+    }
+
+    function editFaqData(id, category, question, answer) {
+        document.getElementById('faqModalTitle').textContent = 'FAQ 수정';
+        document.getElementById('faqId').value = id;
+        document.getElementById('faqCategory').value = category || '';
+        document.getElementById('faqQuestion').value = question || '';
+        document.getElementById('faqAnswer').value = answer || '';
+        hideFaqModalError();
+        document.getElementById('faqModal').classList.add('show');
+    }
+
+    function closeFaqModal() {
+        document.getElementById('faqModal').classList.remove('show');
+    }
+
+    function showFaqModalError(message) {
+        const el = document.getElementById('faqModalError');
+        el.textContent = message || '오류가 발생했습니다.';
+        el.classList.add('show');
+    }
+
+    function hideFaqModalError() {
+        document.getElementById('faqModalError').classList.remove('show');
+    }
+
+    async function saveFaq() {
+        const id = document.getElementById('faqId').value.trim();
+        const category = document.getElementById('faqCategory').value.trim();
+        const question = document.getElementById('faqQuestion').value.trim();
+        const answer = document.getElementById('faqAnswer').value.trim();
+
+        if (!category || !question || !answer) {
+            showFaqModalError('카테고리, 질문, 답변을 모두 입력하세요.');
+            return;
+        }
+
+        try {
+            if (id) {
+                await fetchWithAdmin(`/api/admin/faqs/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ category, question, answer })
+                });
+            } else {
+                await fetchWithAdmin('/api/admin/faqs', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ category, question, answer })
+                });
+            }
+
+            closeFaqModal();
+            await loadFaqs();
+        } catch (err) {
+            console.error(err);
+            showFaqModalError('FAQ 저장 실패\n' + err.message);
+        }
+    }
+
+    async function deleteFaq(id) {
+        if (!confirm('FAQ를 삭제하시겠습니까?')) return;
+
+        try {
+            await fetchWithAdmin(`/api/admin/faqs/${id}`, {
+                method: 'DELETE'
+            });
+            await loadFaqs();
+        } catch (err) {
+            console.error(err);
+            alert('FAQ 삭제 실패\n' + err.message);
+        }
+    }
+
     async function bootstrapAdmin() {
         await Promise.all([
             loadInquiries(),
@@ -1739,7 +1632,8 @@
     }
 
     document.addEventListener('DOMContentLoaded', async function () {
-        const token = localStorage.getItem('adminToken');
+        // ✅ 변경: localStorage -> sessionStorage
+        const token = sessionStorage.getItem('adminToken');
 
         if (token) {
             hideLogin();

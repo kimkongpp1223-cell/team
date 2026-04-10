@@ -19,7 +19,7 @@ spring:
     host: smtp.gmail.com
     port: 587
     username: kimkongpp1223@gmail.com
-    password: ceotogcykrgyxuzu
+    password: ceotogcykrgyxuzu  #구글계정 앱 생성 키
     properties:
       mail:
         smtp:
